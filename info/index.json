@@ -1,0 +1,15 @@
+{
+	"components": {
+		"bootstrap": [
+			"scriptmanager.lua",
+			"autorun.lua",
+			"bootstrap.lua",
+		],
+    "nouvelle-bin": [
+      "*nouvelle-bin"
+    ],
+		"nouvelle": [
+      "*nouvelle"
+    ]
+  }
+}
