@@ -3,9 +3,9 @@
 		"bootstrap": [
 			"scriptmanager.lua",
 			"autorun.lua",
-			"bootstrap.lua",
+			"bootstrap.lua"
 		],
-    "nouvelle-bin": [
+    "nouvelle-lib": [
       "*nouvelle-bin"
     ],
 		"nouvelle": [

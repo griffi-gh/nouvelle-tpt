@@ -2,6 +2,6 @@
 	"components": {
 		"bootstrap": 0,
 		"nouvelle": 0,
-    "nouvelle-bin": 0,
+    "nouvelle-lib": 0
 	}
 }

@@ -26,7 +26,6 @@ local function load_native_library(version, bin_path)
   assert(type(version) == "string", "No lua version provided")
   assert(lua_version[version], "Invalid lua version")
   
- 
   --find the dll suffix
   local binary_name
   if not is_native[version] then
@@ -67,6 +66,11 @@ local function load_native_library(version, bin_path)
   do
     local headers_path = ("./%s/%s/%s_headers.i"):format(bin_path, version, version)
     local header_data
+    do
+      local file = assert(io.open(headers_path, "rb"))
+      header_data = file:read("*a")
+      file:close()
+    end
     ffi.cdef(header_data)
   end
 
