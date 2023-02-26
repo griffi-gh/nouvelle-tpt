@@ -16,8 +16,7 @@ local function load_native_library(version, bin_path)
   --assert(runtime_type[version], "Invalid runtime_type")
   
   --find the dll suffix
-  local binary_name
-  local dll_suffix
+  local dll_suffix, dll_ext
   do
     local dll_arch, dll_os
     --Get bits
@@ -35,18 +34,16 @@ local function load_native_library(version, bin_path)
     --Get OS
     if ffi.os == "Windows" then
       dll_os = "win"
+      dll_ext = "dll"
     elseif ffi.os == "Linux" then
       dll_os = "linux"
+      dll_ext = "so"
     else
       error(("OS %s not supported"):format(ffi.os))
     end
     dll_suffix = dll_os..dll_arch
   end
 
-  --find binary name and check if it's supported
-  binary_name = ("%s_%s"):format(version, dll_suffix)
-  --assert(supported_runtimes[binary_name], ("Runtime %s not supported"):format(binary_name))
-  
   --Find path to headers and load them
   do
     local headers_path = ("./%s/%s/%s-headers.i"):format(bin_path, version, version)
@@ -59,11 +56,16 @@ local function load_native_library(version, bin_path)
     ffi.cdef(header_data)
   end
 
-  --Find binary path and load binary
-  local binary_path = ("./%s/%s/%s"):format(bin_path, version, binary_name)
-  local lib = ffi.load(binary_path)
-  
-  return lib
+  --Load dll binary
+  do
+    --find binary filename
+    local binary_name = ("%s-%s.%s"):format(version, dll_suffix, dll_ext)
+    --assert(supported_runtimes[binary_name], ("Runtime %s not supported"):format(binary_name))
+    --Find binary path and load binary
+    local binary_path = ("./%s/%s/%s"):format(bin_path, version, binary_name)
+    local lib = ffi.load(binary_path)
+    return lib
+  end
 end
 
 return {

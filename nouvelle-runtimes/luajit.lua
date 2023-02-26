@@ -1,3 +1,5 @@
+local ffi = require('ffi')
+
 local Runtime = { id = "luajit", name = "LuaJIT" }
 Runtime.__index = Runtime
 
@@ -8,24 +10,22 @@ end
 function Runtime:_init(code)
   self.code = code
   self.C = require_native("luajit")
-  self.lua = setmetatable(self.C.luaL_newstate(), {
-    __index = self.C,
-    __gc = function(lua)
-      self.C.lua_close(lua)
-    end
-  })
-  self.lua:luaL_openlibs()
-  self.chunk = self.lua:luaL_loadstring(self.code)
+  self.lua = ffi.gc(self.C.luaL_newstate(), function(L)
+    self.C.lua_close(L)
+  end)
+  self.C.luaJIT_setmode(self.lua, 0, 0x0100); --LUAJIT_MODE_ON = 0x0100
+  self.C.luaL_openlibs(self.lua)
+  self.chunk = self.C.luaL_loadstring(self.lua, self.code)
   return self
 end
 
 function Runtime:run()
-  local error = self.lua:lua_pcall(0, 0, 0)
-  if error > 0 then
-    local error = self.lua:lua_tostring(-1)
-    self.lua:lua_pop(1)
+  local is_err = self.C.lua_pcall(self.lua, 0, 0, 0)
+  if is_err > 0 then
+    local err = ffi.string(self.C.lua_tolstring(self.lua, -1, nil))
+    self.C.lua_settop(self.lua, -(1)-1) --self.C.lua_pop(self.lua, 1)
     logf("Script error: %s", error)
-    error(error)
+    error(err)
   end
 end
 
