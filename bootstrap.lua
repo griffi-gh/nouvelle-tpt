@@ -20,7 +20,9 @@ package.path = "?.lua;?/init.lua"
 
 --Prevent writes to _G
 setmetatable(_G, {
-  __newindex = error
+  __newindex = function(_, key, _)
+    error(("Attempt to create global: %s"):format(tostring(key)))
+  end
 })
 
 --Prevent global TPTMP from loading unsandboxed
@@ -30,10 +32,10 @@ end
 
 --Logging
 do
-  local log_file = io.open(bootstrap.log_file, "wb")
+  local log_file = assert(io.open(bootstrap.log_file, "wb"))
   log_file:write("")
   log_file:close()
-  log_file = io.open(bootstrap.log_file, "a+b")
+  log_file = assert(io.open(bootstrap.log_file, "a+b"))
   local function log(...)
     log_file:write(table.concat({...}, " ").."\n")
     --log_file:flush()

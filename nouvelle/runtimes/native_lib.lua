@@ -67,7 +67,5 @@ local function load_native_library(version, bin_path)
 end
 
 return {
-  runtime_type = runtime_type,
-  supported_runtimes = supported_runtimes,
   load_native_library = load_native_library,
 }

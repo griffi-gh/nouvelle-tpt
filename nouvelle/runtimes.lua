@@ -30,7 +30,7 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
       end
     }, {
       __index = _G,
-      __newindex = error,
+      __newindex = getmetatable(_G).__newindex,
     }))()
     assert(
       (type(runtime) == "table") and 
