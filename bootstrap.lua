@@ -8,18 +8,51 @@ local bootstrap = {
 
 --Check if bootstrap is already loded
 if _G.BOOTSTRAP then return end
-_G.BOOTSTRAP = true
+rawset(_G, "BOOTSTRAP", true)
 
 --Make sure that JIT is not disabled
 if jit then pcall(jit.on) end
 
---Prevent global TPTMP from loading unsandboxed
-if tpt.version.jacob1s_mod then
-  _G.TPTMP = { version = math.huge }
-end
-
 --Change path
 package.path = "?.lua;?/init.lua"
+
+--Prevent writes to _G
+setmetatable(_G, {
+  __newindex = error
+})
+
+--Prevent global TPTMP from loading unsandboxed
+if tpt.version.jacob1s_mod then
+  rawset(_G, "TPTMP", { version = math.huge })
+end
+
+--Define log function
+-- do
+--   local ok, ffi = pcall(require, "ffi")
+--   local log_fn
+--   if ok then
+--     ffi.cdef[[
+--       int printf(const char *fmt, ...);
+--     ]]
+--     if ffi.os == "Windows" then
+--       ffi.cdef[[
+--         int AttachConsole(unsigned long dwProcessId)
+--       ]]
+--       print(ffi.C.AttachConsole(4294967295))
+--     end
+--     log_fn = function(...) ffi.C.printf(...) end
+--   else 
+--     log_fn = print
+--   end
+--   rawset(_G, "log", function(fmt, ...)
+--     if #({...}) == 0 then
+--       log_fn(tostring(fmt))
+--     else
+--       log_fn(tostring(fmt).format(...))
+--     end
+--   end)
+--   log("Nouvelle")
+-- end
 
 --Run
 do

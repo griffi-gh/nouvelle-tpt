@@ -1,16 +1,21 @@
+assert(_G.BOOTSTRAP, "launched without bootstrap!")
+
 local runtimes = require(.....'.runtimes')
 
-local manager = {}
-manager.__index = manager
+local PATH_NOUVELLE = "./nouvelle/"
+local PATH_LIB = "./nouvelle-lib/"
+local PATH_RUNTIMES = "./nouvelle-runtimes/"
 
-function manager:init()
+local Nouvelle = {}
+Nouvelle.__index = Nouvelle
+
+function Nouvelle:init()
   return setmetatable({
-    runtimes = runtimes:init()
+    runtimes = runtimes:init(PATH_RUNTIMES, PATH_LIB)
   }, self)
 end
 
 return function()
   print("Nouvelle manager")
-  local man = manager:init()
-  man.runtimes:require_native("luajit", "nouvelle-lib")
+  Nouvelle:init()
 end
