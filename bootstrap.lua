@@ -36,12 +36,16 @@ do
   log_file = io.open(bootstrap.log_file, "a+b")
   local function log(...)
     log_file:write(table.concat({...}, " ").."\n")
-    log_file:flush()
+    --log_file:flush()
+  end
+  local function logf(...)
+    log(string.format(...))
   end
   event.register(event.close, function()
     log_file:close()
   end)
   rawset(_G, "log", log)
+  rawset(_G, "logf", logf)
   log(bootstrap.friendly_name, "log file")
 end
 

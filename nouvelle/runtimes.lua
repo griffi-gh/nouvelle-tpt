@@ -14,6 +14,7 @@ function RuntimeManager:require_native(runtime_type, path)
 end
 
 function RuntimeManager:load_runtimes(runtime_path, lib_path)
+  log("Loading runtimes...")
   assert(type(runtime_path) == "string", "No runtime path provided")
   assert(type(lib_path) == "string", "No lib path provided")
   local f = fs.list(runtime_path)
@@ -45,11 +46,14 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
       runtime.name = runtime.id
     end
     self.runtimes[#self.runtimes+1] = runtime
+    logf("%s (id: %s)", runtime.name, runtime.id)
   end
+  logf("Loaded %d runtime%s!", #self.runtimes, (#self.runtimes ~= 1) and "s" or "")
   return self
 end
 
 function RuntimeManager:init(runtime_path, lib_path)
+  log("Init RuntimeManager...")
   return setmetatable({
     runtimes = {},
     native_lib = {},

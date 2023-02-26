@@ -10,12 +10,16 @@ local Nouvelle = {}
 Nouvelle.__index = Nouvelle
 
 function Nouvelle:init()
+  log("Init Nouvelle...")
   return setmetatable({
     runtimes = runtimes:init(PATH_RUNTIMES, PATH_LIB)
   }, self)
 end
 
 return function()
-  print("Nouvelle manager")
+  log("[*] Init started")
+  local time = os.clock()
   Nouvelle:init()
+  time = os.clock() - time
+  logf("[*] Done in %.2f s", time)
 end
