@@ -1,12 +1,16 @@
 local runtimes = require(.....'.runtimes')
 
 local manager = {}
+manager.__index = manager
 
-function manager:init()  
-  print("Nouvelle manager")
-  runtimes.init_runtimes()
+function manager:init()
+  return setmetatable({
+    runtimes = runtimes:init()
+  }, self)
 end
 
 return function()
-  manager:init()
+  print("Nouvelle manager")
+  local man = manager:init()
+  man.runtimes:require_native("luajit")
 end
