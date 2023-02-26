@@ -1,14 +1,16 @@
 local bootstrap = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
-  bootstrap_version = 0,
+  log_file = "nouvelle.log",
 }
 
 -------------------------------------
 
 --Check if bootstrap is already loded
 if _G.BOOTSTRAP then return end
-rawset(_G, "BOOTSTRAP", true)
+
+--Set global BOOTSTRAP variable
+rawset(_G, "BOOTSTRAP", bootstrap)
 
 --Make sure that JIT is not disabled
 if jit then pcall(jit.on) end
@@ -26,33 +28,22 @@ if tpt.version.jacob1s_mod then
   rawset(_G, "TPTMP", { version = math.huge })
 end
 
---Define log function
--- do
---   local ok, ffi = pcall(require, "ffi")
---   local log_fn
---   if ok then
---     ffi.cdef[[
---       int printf(const char *fmt, ...);
---     ]]
---     if ffi.os == "Windows" then
---       ffi.cdef[[
---         int AttachConsole(unsigned long dwProcessId)
---       ]]
---       print(ffi.C.AttachConsole(4294967295))
---     end
---     log_fn = function(...) ffi.C.printf(...) end
---   else 
---     log_fn = print
---   end
---   rawset(_G, "log", function(fmt, ...)
---     if #({...}) == 0 then
---       log_fn(tostring(fmt))
---     else
---       log_fn(tostring(fmt).format(...))
---     end
---   end)
---   log("Nouvelle")
--- end
+--Logging
+do
+  local log_file = io.open(bootstrap.log_file, "wb")
+  log_file:write("")
+  log_file:close()
+  log_file = io.open(bootstrap.log_file, "a+b")
+  local function log(...)
+    log_file:write(table.concat({...}, " ").."\n")
+    log_file:flush()
+  end
+  event.register(event.close, function()
+    log_file:close()
+  end)
+  rawset(_G, "log", log)
+  log(bootstrap.friendly_name, "log file")
+end
 
 --Run
 do
