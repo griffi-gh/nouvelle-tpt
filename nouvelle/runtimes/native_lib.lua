@@ -49,7 +49,7 @@ local function load_native_library(version, bin_path)
   
   --Find path to headers and load them
   do
-    local headers_path = ("./%s/%s/%s_headers.i"):format(bin_path, version, version)
+    local headers_path = ("./%s/%s/%s-headers.i"):format(bin_path, version, version)
     local header_data
     do
       local file = assert(io.open(headers_path, "rb"))

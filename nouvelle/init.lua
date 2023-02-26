@@ -19,7 +19,9 @@ end
 return function()
   log("[*] Init started")
   local time = os.clock()
-  Nouvelle:init()
+  local manager = Nouvelle:init()
   time = os.clock() - time
   logf("[*] Done in %.2f s", time)
+
+  manager.runtimes.runtimes.luajit:new("error('hi')"):run()
 end

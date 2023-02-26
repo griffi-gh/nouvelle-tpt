@@ -46,7 +46,9 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
       runtime.name = runtime.id
     end
     self.runtimes[#self.runtimes+1] = runtime
-    logf("%s (id: %s)", runtime.name, runtime.id)
+    self.runtimes[runtime.id] = runtime
+    runtime.nid = #self.runtimes
+    logf("Found %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
   end
   logf("Loaded %d runtime%s!", #self.runtimes, (#self.runtimes ~= 1) and "s" or "")
   return self
