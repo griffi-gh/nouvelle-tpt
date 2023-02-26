@@ -45,8 +45,7 @@ void (lua_pushnumber) (lua_State *L, lua_Number n);
 void (lua_pushinteger) (lua_State *L, lua_Integer n);
 void (lua_pushlstring) (lua_State *L, const char *s, size_t l);
 void (lua_pushstring) (lua_State *L, const char *s);
-const char *(lua_pushvfstring) (lua_State *L, const char *fmt,
-                                                      va_list argp);
+const char *(lua_pushvfstring) (lua_State *L, const char *fmt, va_list argp);
 const char *(lua_pushfstring) (lua_State *L, const char *fmt, ...);
 void (lua_pushcclosure) (lua_State *L, lua_CFunction fn, int n);
 void (lua_pushboolean) (lua_State *L, int b);
@@ -69,8 +68,7 @@ int (lua_setfenv) (lua_State *L, int idx);
 void (lua_call) (lua_State *L, int nargs, int nresults);
 int (lua_pcall) (lua_State *L, int nargs, int nresults, int errfunc);
 int (lua_cpcall) (lua_State *L, lua_CFunction func, void *ud);
-int (lua_load) (lua_State *L, lua_Reader reader, void *dt,
-                                        const char *chunkname);
+int (lua_load) (lua_State *L, lua_Reader reader, void *dt, const char *chunkname);
 int (lua_dump) (lua_State *L, lua_Writer writer, void *data);
 int (lua_yield) (lua_State *L, int nresults);
 int (lua_resume) (lua_State *L, int narg);
@@ -96,8 +94,7 @@ int lua_gethookmask (lua_State *L);
 int lua_gethookcount (lua_State *L);
 void *lua_upvalueid (lua_State *L, int idx, int n);
 void lua_upvaluejoin (lua_State *L, int idx1, int n1, int idx2, int n2);
-int lua_loadx (lua_State *L, lua_Reader reader, void *dt,
-         const char *chunkname, const char *mode);
+int lua_loadx (lua_State *L, lua_Reader reader, void *dt, const char *chunkname, const char *mode);
 const lua_Number *lua_version (lua_State *L);
 void lua_copy (lua_State *L, int fromidx, int toidx);
 lua_Number lua_tonumberx (lua_State *L, int idx, int *isnum);
@@ -127,11 +124,8 @@ enum {
   LUAJIT_MODE_MAX
 };
 int luaJIT_setmode(lua_State *L, int idx, int mode);
-typedef void (*luaJIT_profile_callback)(void *data, lua_State *L,
-     int samples, int vmstate);
-void luaJIT_profile_start(lua_State *L, const char *mode,
-      luaJIT_profile_callback cb, void *data);
+typedef void (*luaJIT_profile_callback)(void *data, lua_State *L, int samples, int vmstate);
+void luaJIT_profile_start(lua_State *L, const char *mode, luaJIT_profile_callback cb, void *data);
 void luaJIT_profile_stop(lua_State *L);
-const char *luaJIT_profile_dumpstack(lua_State *L, const char *fmt,
-          int depth, size_t *len);
+const char *luaJIT_profile_dumpstack(lua_State *L, const char *fmt, int depth, size_t *len);
 void luaJIT_version_2_1_0_beta3(void);
