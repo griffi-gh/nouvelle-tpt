@@ -1,19 +1,19 @@
 local ffi = require("ffi")
 
-local runtime_type = {
-  luajit = "luajit",
-}
+-- local runtime_type = {
+--   luajit = "luajit",
+-- }
 
-local supported_runtimes = {
-  luajit_linux64 = true,
-  luajit_win64 = true,
-  luajit_win32 = true,
-}
+-- local supported_runtimes = {
+--   luajit_linux64 = true,
+--   luajit_win64 = true,
+--   luajit_win32 = true,
+-- }
 
 local function load_native_library(version, bin_path)
-  bin_path = bin_path or "./"
+  assert(type(bin_path) == "string", "No bin_path provided")
   assert(type(version) == "string", "No runtime_type provided")
-  assert(runtime_type[version], "Invalid runtime_type")
+  --assert(runtime_type[version], "Invalid runtime_type")
   
   --find the dll suffix
   local binary_name
@@ -45,7 +45,7 @@ local function load_native_library(version, bin_path)
 
   --find binary name and check if it's supported
   binary_name = ("%s_%s"):format(version, dll_suffix)
-  assert(supported_runtimes[binary_name], ("Runtime %s not supported"):format(binary_name))
+  --assert(supported_runtimes[binary_name], ("Runtime %s not supported"):format(binary_name))
   
   --Find path to headers and load them
   do
