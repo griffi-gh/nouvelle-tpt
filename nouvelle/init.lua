@@ -12,5 +12,5 @@ end
 return function()
   print("Nouvelle manager")
   local man = manager:init()
-  man.runtimes:require_native("luajit")
+  man.runtimes:require_native("luajit", "nouvelle-lib")
 end

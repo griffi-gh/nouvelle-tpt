@@ -6,13 +6,8 @@ local runtime_type = {
 
 local supported_runtimes = {
   luajit_linux64 = true,
-  -- lua51_linux32 = true,
-  -- lua51_linux64 = true,
-  -- lua51_win32 = true,
-  -- lua51_win64 = true,
-  -- lua54_linux64 = true,
-  -- lua54_win32 = true,
-  -- lua54_win64 = true,
+  luajit_win64 = true,
+  luajit_win32 = true,
 }
 
 local function load_native_library(version, bin_path)
