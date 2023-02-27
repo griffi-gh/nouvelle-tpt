@@ -1,4 +1,7 @@
-local Runtime = { id = "unsafe-nosandbox", unsafe = true }
+local Runtime = { 
+  id = "unsafe-nosandbox",
+  unsafe = true,
+}
 Runtime.__index = Runtime
 
 function Runtime:new(code)

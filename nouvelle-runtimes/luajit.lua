@@ -1,6 +1,7 @@
-local ffi = require('ffi')
-
-local Runtime = { id = "luajit", name = "LuaJIT" }
+local Runtime = { 
+  id = "luajit", 
+  name = "LuaJIT" 
+}
 Runtime.__index = Runtime
 
 function Runtime:new(code)
@@ -8,9 +9,10 @@ function Runtime:new(code)
 end
 
 function Runtime:_init(code)
-  self.code = code
+  self.ffi = require('ffi')
   self.C = require_native("luajit")
-  self.lua = ffi.gc(self.C.luaL_newstate(), function(L)
+  self.code = code
+  self.lua = self.ffi.gc(self.C.luaL_newstate(), function(L)
     self.C.lua_close(L)
   end)
   self.C.luaJIT_setmode(self.lua, 0, 0x0100); --LUAJIT_MODE_ON = 0x0100
@@ -22,7 +24,7 @@ end
 function Runtime:run()
   local is_err = self.C.lua_pcall(self.lua, 0, 0, 0)
   if is_err > 0 then
-    local err = ffi.string(self.C.lua_tolstring(self.lua, -1, nil))
+    local err = self.ffi.string(self.C.lua_tolstring(self.lua, -1, nil))
     self.C.lua_settop(self.lua, -(1)-1) --self.C.lua_pop(self.lua, 1)
     error(err)
   end

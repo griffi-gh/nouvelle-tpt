@@ -1,10 +1,11 @@
 [metadata]
 id = "nouvelle-gui"
 name = "Nouvelle GUI"
-description = ""
+description = "Graphical interface for the Nouvelle mod manager"
 
 [runtime]
 runs_on = "luajit"
+entry_point = "gui.lua"
 
 [permissions]
 nouvelle = true
