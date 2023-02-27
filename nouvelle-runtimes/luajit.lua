@@ -24,7 +24,6 @@ function Runtime:run()
   if is_err > 0 then
     local err = ffi.string(self.C.lua_tolstring(self.lua, -1, nil))
     self.C.lua_settop(self.lua, -(1)-1) --self.C.lua_pop(self.lua, 1)
-    logf("Script error: %s", error)
     error(err)
   end
 end

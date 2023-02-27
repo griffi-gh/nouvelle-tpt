@@ -3,7 +3,7 @@ assert(_G.BOOTSTRAP, "launched without bootstrap!")
 local runtimes = require(.....'.runtimes')
 
 local PATH_NOUVELLE = "./nouvelle/"
-local PATH_LIB = "./nouvelle-lib/"
+local PATH_LIB = "./nouvelle-native/"
 local PATH_RUNTIMES = "./nouvelle-runtimes/"
 
 local Nouvelle = {}

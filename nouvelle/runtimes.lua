@@ -19,36 +19,50 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
   assert(type(lib_path) == "string", "No lib path provided")
   local f = fs.list(runtime_path)
   for _, file_name in ipairs(f) do
-    local file_path = runtime_path..file_name
-    local file = assert(io.open(file_path, "rb"))
-    local data = file:read("*a")
-    file:close()
-    local fn = assert(load(data))
-    local runtime = setfenv(fn, setmetatable({
-      require_native = function(library)
-        return self:require_native(library, lib_path)
+    local ok, err = pcall(function()
+      local file_path = runtime_path..file_name
+      local file = assert(io.open(file_path, "rb"))
+      local data = file:read("*a")
+      file:close()
+      local fn = assert(load(data))
+      local runtime = setfenv(fn, setmetatable({
+        require_native = function(library)
+          return self:require_native(library, lib_path)
+        end
+      }, {
+        __index = _G,
+        __newindex = getmetatable(_G).__newindex,
+      }))()
+      assert(
+        (type(runtime) == "table") and 
+        (
+          (type(runtime.new) == "function") and 
+          (type(runtime.run) == "function") and 
+          (type(runtime.id)  == "string") and
+          ((type(runtime.name) == "string") or (runtime.name == nil)) and
+          ((type(runtime.unsafe) == "bool") or (runtime.unsafe == nil))
+        ), 
+        "Invalid runtime API provided by "..file_name
+      )
+      if runtime.name == nil then
+        runtime.name = runtime.id
       end
-    }, {
-      __index = _G,
-      __newindex = getmetatable(_G).__newindex,
-    }))()
-    assert(
-      (type(runtime) == "table") and 
-      (
-        (type(runtime.new) == "function") and 
-        (type(runtime.run) == "function") and 
-        (type(runtime.id)  == "string") and
-        ((type(runtime.name) == "string") or (runtime.name == nil))
-      ), 
-      "Invalid runtime API provided by "..file_name
-    )
-    if runtime.name == nil then
-      runtime.name = runtime.id
+      self.runtimes[#self.runtimes+1] = runtime
+      self.runtimes[runtime.id] = runtime
+      runtime.nid = #self.runtimes
+      logf("Found %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
+    end)
+    if not ok then
+      logf("Error loading runtime %s: %s", file_name, err)
+      local err_runtime = {
+        id = file_name,
+        name = file_name,
+        error = true,
+      }
+      self.runtimes[err_runtime.id] = err_runtime
+      self.runtimes[#self.runtimes+1] = err_runtime
+      err_runtime.nid = #self.runtimes
     end
-    self.runtimes[#self.runtimes+1] = runtime
-    self.runtimes[runtime.id] = runtime
-    runtime.nid = #self.runtimes
-    logf("Found %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
   end
   logf("Loaded %d runtime%s!", #self.runtimes, (#self.runtimes ~= 1) and "s" or "")
   return self

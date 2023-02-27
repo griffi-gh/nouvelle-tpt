@@ -1,0 +1,12 @@
+[metadata]
+id = "nouvelle-gui"
+name = "Nouvelle GUI"
+description = ""
+
+[runtime]
+runs_on = "luajit"
+
+[permissions]
+nouvelle = true
+filesystem = { scope = ["./Mods"] }
+internet = { scope = ["http:localhost"] }
