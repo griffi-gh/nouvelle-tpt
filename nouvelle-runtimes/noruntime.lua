@@ -1,5 +1,4 @@
 local Runtime = { 
-  id = "unsafe-noruntime",
   unsafe = true,
 }
 Runtime.__index = Runtime

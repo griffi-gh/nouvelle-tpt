@@ -19,6 +19,7 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
   assert(type(lib_path) == "string", "No lib path provided")
   local f = fs.list(runtime_path)
   for _, file_name in ipairs(f) do
+    local runtime_id = file_name:sub(1, -5)
     local ok, err = pcall(function()
       local file_path = runtime_path..file_name
       local file = assert(io.open(file_path, "rb"))
@@ -39,11 +40,12 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
         local typ = type(runtime[key])
         assert((typ == type1) or (typ == type2), err)
       end
-      assert_runtime("id", "string")
+      assert_runtime("id", "nil")
       assert_runtime("name", "string", "nil")
       assert_runtime("unsafe", "boolean", "nil")
       assert_runtime("new", "function")
       assert_runtime("run", "function")
+      runtime.id = runtime_id
       if runtime.name == nil then
         runtime.name = runtime.id
       end
@@ -55,10 +57,10 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
     if not ok then
       logf("Error loading runtime %s: %s", file_name, err)
       local err_runtime = {
-        id = file_name,
-        name = file_name,
+        id = runtime_id,
         error = true,
       }
+      err_runtime.name = err_runtime.id
       self.runtimes[err_runtime.id] = err_runtime
       self.runtimes[#self.runtimes+1] = err_runtime
       err_runtime.nid = #self.runtimes
