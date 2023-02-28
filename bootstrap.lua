@@ -63,6 +63,9 @@ do
     error_header = "Runtime"
   end, use_xpcall and debug.traceback)
   if not ok and err then
+    if platform or plat then
+      pcall((platform or plat).clipboardPaste, bootstrap.friendly_name.."ERROR\n"..err)
+    end
     tpt.throw_error(bootstrap.friendly_name..": "..error_header.." error\n\n"..(err or ""))
   end
 end
