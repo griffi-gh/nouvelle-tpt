@@ -33,24 +33,24 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
         __index = _G,
         __newindex = getmetatable(_G).__newindex,
       }))()
-      assert(
-        (type(runtime) == "table") and 
-        (
-          (type(runtime.new) == "function") and 
-          (type(runtime.run) == "function") and 
-          (type(runtime.id)  == "string") and
-          ((type(runtime.name) == "string") or (runtime.name == nil)) and
-          ((type(runtime.unsafe) == "bool") or (runtime.unsafe == nil))
-        ), 
-        "Invalid runtime API provided by "..file_name
-      )
+      assert(type(runtime) == "table", file_name..": not a table")
+      local function assert_runtime(key, type1, type2)
+        local err = ("Invalid API: %s is not a %s%s"):format(key, type1, type2 and (" or "..type2) or "")
+        local typ = type(runtime[key])
+        assert((typ == type1) or (typ == type2), err)
+      end
+      assert_runtime("id", "string")
+      assert_runtime("name", "string", "nil")
+      assert_runtime("unsafe", "boolean", "nil")
+      assert_runtime("new", "function")
+      assert_runtime("run", "function")
       if runtime.name == nil then
         runtime.name = runtime.id
       end
       self.runtimes[#self.runtimes+1] = runtime
       self.runtimes[runtime.id] = runtime
       runtime.nid = #self.runtimes
-      logf("Found %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
+      logf("Loaded %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
     end)
     if not ok then
       logf("Error loading runtime %s: %s", file_name, err)
