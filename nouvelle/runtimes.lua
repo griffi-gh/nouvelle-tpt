@@ -43,7 +43,9 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
       assert_runtime("id", "nil")
       assert_runtime("name", "string", "nil")
       assert_runtime("unsafe", "boolean", "nil")
+      assert_runtime("init", "function", "nil")
       assert_runtime("new", "function")
+      assert_runtime("load", "function")
       assert_runtime("run", "function")
       runtime.id = runtime_id
       if runtime.name == nil then
@@ -52,6 +54,9 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
       self.runtimes[#self.runtimes+1] = runtime
       self.runtimes[runtime.id] = runtime
       runtime.nid = #self.runtimes
+      if runtime.init then
+        runtime:init()
+      end
       logf("Loaded %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
     end)
     if not ok then

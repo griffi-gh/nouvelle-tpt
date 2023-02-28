@@ -22,6 +22,5 @@ return function()
   local manager = Nouvelle:init()
   time = os.clock() - time
   logf("[*] Done in %.2f s", time)
-
-  manager.runtimes.runtimes.luajit:new("error('hi')"):run()
+  manager.runtimes.runtimes.luajit:new():load("error('hi')"):run()
 end
