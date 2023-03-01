@@ -1,4 +1,6 @@
-local ModManager = {} ---@class ModManager
+---@class ModManager
+---@field mods table
+local ModManager = {} 
 ModManager.__index = ModManager
 
 ---@return ModManager

@@ -1,4 +1,5 @@
 {
+  "Lua.runtime.version": "LuaJIT",
   "lua.debug.settings.luaVersion": "jit",
   "Lua.diagnostics.globals": [
     "jit",
@@ -12,6 +13,6 @@
     "plat",
     "platform",
     //only in runtimes:
-    "require_native",
+    "require_native"
   ]
 }

@@ -2,6 +2,7 @@
 ---@version JIT
 ---@param runtime_type string
 ---@param bin_path string
+---@return ffi.namespace*
 local function load_native_library(runtime_type, bin_path)
   local ffi = require("ffi")
 

@@ -2,11 +2,13 @@ local native_lib = require(.....'.native_lib')
 local fs = assert(fs, "No filesystem API")
 
 ---@class RuntimeManager
----@field private native_lib table<string, userdata> Cached native libraries
+---@field private native_lib table<string, ffi.namespace*> Cached native libraries
+---@field public runtimes table<number | string, Runtime> Loaded runtimes (both numeric and id indexed)
 local RuntimeManager = {}
 RuntimeManager.__index = RuntimeManager
 
 ---@class Runtime
+---@field public id string?
 ---@field public name string
 ---@field public unsafe boolean?
 ---@field public init function
@@ -14,6 +16,12 @@ RuntimeManager.__index = RuntimeManager
 ---@field public load function
 ---@field public run function
 
+---Require a native library  
+---This function is cached
+---@version JIT
+---@param runtime_type string Name of the native runtime library
+---@param path string Directory to load from
+---@return ffi.namespace*
 function RuntimeManager:require_native(runtime_type, path)
   if self.native_lib[runtime_type] then
     return self.native_lib[runtime_type]
@@ -23,6 +31,7 @@ function RuntimeManager:require_native(runtime_type, path)
   return lib
 end
 
+---Load all runtimes from NvConfig.runtime_path
 ---@param nv_config NvConfig
 ---@version 5.1,JIT
 function RuntimeManager:load_runtimes(nv_config)
@@ -31,8 +40,9 @@ function RuntimeManager:load_runtimes(nv_config)
   assert(type(nv_config.runtime_path) == "string", "No runtime path provided")
   assert(type(nv_config.lib_path) == "string", "No lib path provided")
   local f = fs.list(nv_config.runtime_path)
+  ---@param file_name string
   for _, file_name in ipairs(f) do
-    local runtime_id = file_name:sub(1, -5) ---@type string
+    local runtime_id = file_name:sub(1, -5)
     local ok, err = pcall(function()
       local file_path = nv_config.runtime_path..file_name
       local file = assert(io.open(file_path, "rb"))
@@ -90,11 +100,14 @@ function RuntimeManager:load_runtimes(nv_config)
   return self
 end
 
+---@return RuntimeManager
 function RuntimeManager:new()
-  return setmetatable({
+  ---@type RuntimeManager
+  local runtime_manager = {
     runtimes = {},
     native_lib = {},
-  }, self)
+  }
+  return setmetatable(runtime_manager, self)
 end
 
 return RuntimeManager
