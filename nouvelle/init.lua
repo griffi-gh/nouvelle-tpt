@@ -1,3 +1,5 @@
+assert(getglobal "BOOTSTRAP", "Loaded without bootstrap script")
+
 local RuntimeManager = require(.....'.runtimes')
 
 local nv_config = {
@@ -29,5 +31,5 @@ return function()
   rawset(_G, "NOUVELLE", nouvelle)
   time = os.clock() - time
   logf("[*] Done in %.2f s", time)
-  nouvelle.runtime_manager.runtimes.luajit:new():load("error('hi')"):run()
+  nouvelle.runtime_manager.runtimes.luajit:new():load("error('Hello world')"):run()
 end
