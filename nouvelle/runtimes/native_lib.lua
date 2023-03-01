@@ -17,7 +17,10 @@ local function load_native_library(version, bin_path)
   
   --find the dll suffix
   local dll_suffix, dll_ext
-  do
+  if getglobal "platform" then
+    dll_suffix = platform.platform():lower()
+    dll_ext = "" --empty for automatic
+  else
     local dll_arch, dll_os
     --Get bits
     if ffi.abi("32bit") and ffi.arch == "x86" then
@@ -34,10 +37,10 @@ local function load_native_library(version, bin_path)
     --Get OS
     if ffi.os == "Windows" then
       dll_os = "win"
-      dll_ext = "dll"
+      dll_ext = ".dll"
     elseif ffi.os == "Linux" then
-      dll_os = "linux"
-      dll_ext = "so"
+      dll_os = "lin"
+      dll_ext = ".so"
     else
       error(("OS %s not supported"):format(ffi.os))
     end
@@ -59,7 +62,7 @@ local function load_native_library(version, bin_path)
   --Load dll binary
   do
     --find binary filename
-    local binary_name = ("%s-%s.%s"):format(version, dll_suffix, dll_ext)
+    local binary_name = ("%s-%s%s"):format(version, dll_suffix, dll_ext)
     --assert(supported_runtimes[binary_name], ("Runtime %s not supported"):format(binary_name))
     --Find binary path and load binary
     local binary_path = ("./%s/%s/%s"):format(bin_path, version, binary_name)

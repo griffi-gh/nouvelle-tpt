@@ -13,22 +13,22 @@ function RuntimeManager:require_native(runtime_type, path)
   return lib
 end
 
-function RuntimeManager:load_runtimes(runtime_path, lib_path)
+function RuntimeManager:load_runtimes(nv_config)
   log("Loading runtimes...")
-  assert(type(runtime_path) == "string", "No runtime path provided")
-  assert(type(lib_path) == "string", "No lib path provided")
-  local f = fs.list(runtime_path)
+  assert(type(nv_config.runtime_path) == "string", "No runtime path provided")
+  assert(type(nv_config.lib_path) == "string", "No lib path provided")
+  local f = fs.list(nv_config.runtime_path)
   for _, file_name in ipairs(f) do
     local runtime_id = file_name:sub(1, -5)
     local ok, err = pcall(function()
-      local file_path = runtime_path..file_name
+      local file_path = nv_config.runtime_path..file_name
       local file = assert(io.open(file_path, "rb"))
       local data = file:read("*a")
       file:close()
       local fn = assert(load(data))
       local runtime = setfenv(fn, setmetatable({
         require_native = function(library)
-          return self:require_native(library, lib_path)
+          return self:require_native(library, nv_config.lib_path)
         end
       }, {
         __index = _G,
@@ -75,12 +75,11 @@ function RuntimeManager:load_runtimes(runtime_path, lib_path)
   return self
 end
 
-function RuntimeManager:init(runtime_path, lib_path)
-  log("Init RuntimeManager...")
+function RuntimeManager:new()
   return setmetatable({
     runtimes = {},
     native_lib = {},
-  }, self):load_runtimes(runtime_path, lib_path)
+  }, self)
 end
 
 return RuntimeManager

@@ -1,3 +1,4 @@
+--BOOTSTRAP product information
 local bootstrap = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
@@ -6,28 +7,39 @@ local bootstrap = {
 
 -------------------------------------
 
+--Check for tpt
+assert(rawget(_G, "tpt"), "This is a The Powder Toy mod")
+
 --Check if bootstrap is already loded
-if _G.BOOTSTRAP then return end
+if rawget(_G, "BOOTSTRAP") then return end
 
 --Set global BOOTSTRAP variable
 rawset(_G, "BOOTSTRAP", bootstrap)
-
---Make sure that JIT is not disabled
-if jit then pcall(jit.on) end
 
 --Change path
 package.path = "?.lua;?/init.lua"
 
 --Prevent writes to _G
 setmetatable(_G, {
+  __index = function(_, key, _)
+    error(("Undefined global variable: %s"):format(tostring(key)))
+  end,
   __newindex = function(_, key, _)
     error(("Attempt to create global: %s"):format(tostring(key)))
   end
 })
 
+--Functions to set/get globals
+rawset(_G, "setglobal", function(key, value)
+  rawset(_G, key, value)
+end)
+rawset(_G, "getglobal", function(key)
+  return rawget(_G, key)
+end)
+
 --Prevent global TPTMP from loading unsandboxed
 if tpt.version.jacob1s_mod then
-  rawset(_G, "TPTMP", { version = math.huge })
+  setglobal("TPTMP", { version = math.huge })
 end
 
 --Logging
@@ -37,8 +49,8 @@ do
   log_file:close()
   log_file = assert(io.open(bootstrap.log_file, "a+b"))
   local function log(...)
-    log_file:write(table.concat({...}, " ").."\n")
-    --log_file:flush()
+    local mesage = table.concat({...}, " ")
+    log_file:write(mesage.."\n")
   end
   local function logf(...)
     log(string.format(...))
@@ -46,9 +58,18 @@ do
   event.register(event.close, function()
     log_file:close()
   end)
-  rawset(_G, "log", log)
-  rawset(_G, "logf", logf)
-  log(bootstrap.friendly_name, "log file")
+  setglobal("log", log)
+  setglobal("logf", logf)
+  log("BOOTSTRAP LOGGER: "..bootstrap.friendly_name)
+end
+
+--Make sure that JIT is not disabled
+if getglobal("jit") then 
+  if pcall(jit.on) then
+    log("JIT: on")
+  else
+    log("JIT: off")
+  end
 end
 
 --Run
@@ -62,10 +83,14 @@ do
     init()
     error_header = "Runtime"
   end, use_xpcall and debug.traceback)
-  if not ok and err then
-    if platform or plat then
-      pcall((platform or plat).clipboardPaste, bootstrap.friendly_name.."ERROR\n"..err)
+  if not ok then
+    local strerr = tostring(err)
+    logf("====== ERROR ======\n%s\n===================", strerr)
+    if getglobal "platform" then
+      if not pcall(platform.clipboardPaste, bootstrap.friendly_name.."ERROR\n"..strerr) then
+        log("failed to copy error to clipboard")
+      end
     end
-    tpt.throw_error(bootstrap.friendly_name..": "..error_header.." error\n\n"..(err or ""))
+    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game"):format(bootstrap.friendly_name, error_header, strerr))
   end
 end

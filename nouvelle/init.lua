@@ -1,26 +1,33 @@
-assert(_G.BOOTSTRAP, "launched without bootstrap!")
+local RuntimeManager = require(.....'.runtimes')
 
-local runtimes = require(.....'.runtimes')
-
-local PATH_NOUVELLE = "./nouvelle/"
-local PATH_LIB = "./nouvelle-native/"
-local PATH_RUNTIMES = "./nouvelle-runtimes/"
+local nv_config = {
+  path = "./nouvelle/",
+  lib_path = "./nouvelle-native/",
+  runtime_path = "./nouvelle-runtimes/",
+}
 
 local Nouvelle = {}
 Nouvelle.__index = Nouvelle
 
-function Nouvelle:init()
-  log("Init Nouvelle...")
+function Nouvelle:new()
   return setmetatable({
-    runtimes = runtimes:init(PATH_RUNTIMES, PATH_LIB)
+    runtime_manager = RuntimeManager:new(),
+    --loader = 
   }, self)
 end
 
+function Nouvelle:init() 
+  log("Init Nouvelle...")
+  self.runtime_manager:load_runtimes(nv_config)
+  return self
+end
+
 return function()
-  log("[*] Init started")
+  log("[*] Init process started")
   local time = os.clock()
-  local manager = Nouvelle:init()
+  local nouvelle = Nouvelle:new():init()
+  rawset(_G, "NOUVELLE", nouvelle)
   time = os.clock() - time
   logf("[*] Done in %.2f s", time)
-  manager.runtimes.runtimes.luajit:new():load("error('hi')"):run()
+  nouvelle.runtime_manager.runtimes.luajit:new():load("error('hi')"):run()
 end
