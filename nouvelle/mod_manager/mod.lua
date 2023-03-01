@@ -2,6 +2,8 @@
 ---@field public id string Unique identifier of the mod
 ---@field public name string? User-friendly name of the mod
 ---@field public description string? Mod description
+---@field public dir_path string? Path to the mod directory
+---@field public nid number? Contains numeric id of the mod if it's loaded
 ---@field public runtime string Id of the runtime used to run the mod
 ---@field public runtime_options table Runtime-dependent options
 ---@field public permissions table[] Array of mod permissions
@@ -39,21 +41,26 @@ local function ass_type(what, thing, type1, type2)
   return thing
 end
 
----Creates a mod object from TOML manifest
+---Creates a mod object from TOML manifest  
+---Do not use the manifest after passing it to this function
+---@param path string
 ---@param manifest table
 ---@return Mod
-function Mod:from_manifest(manifest)
+function Mod:from_path_and_manifest(path, manifest)
   ass_type("manifest", manifest, "table")
   local runs_on = manifest.runtime and manifest.runtime.runs_on
   manifest.runtime.runs_on = nil
-  return setmetatable({
+  ---@type Mod
+  local mod = {
     id = ass_type("manifest.metadata.id", manifest.metadata.id, "string"),
     name = nullify(ass_type("manifest.metadata.name", "string", "nil")),
+    path = ass_type("<path>", path, "string", "nil"),
     description = nullify(ass_type("manifest.metadata.description", manifest.metadata.description, "string", "nil")),
     runtime = nullify(ass_type("manifest.runtime.runs_on", runs_on, "string", "nil")) or "luajit",
     runtime_options = ass_type("manifest.runtime", manifest.runtime, "table", "nil") or {},
     permissions = ass_type("manifest.permissions", manifest.permissions, "table", "nil") or {},
-  }, self)
+  }
+  return setmetatable(mod, self)
 end
 
 ---Get the name of the mod  
