@@ -49,19 +49,24 @@ do
   log_file:close()
   log_file = assert(io.open(bootstrap.log_file, "a+b"))
   local tab = 0
+  ---@param t number?
   local function logtab(t)
-    tab = tab + (t or 1)
+    tab = tab + (math.floor(t or 1))
   end
+  ---@param ... string
   local function log(...)
-    local mesage = (" "):rep(tab * 2)..table.concat({...}, " ")
-    log_file:write(mesage.."\n")
+    local message = (" "):rep(tab * 2)..table.concat({...}, " ")
+    log_file:write(message.."\n")
   end
-  local function logf(...)
-    log(string.format(...))
+  ---@param fmt string
+  ---@param ... string?
+  local function logf(fmt, ...)
+    log(string.format(fmt, ...))
   end
   event.register(event.close, function()
     log_file:close()
   end)
+  logtab(0.5)
   setglobal("log", log)
   setglobal("logf", logf)
   setglobal("logtab", logtab)
@@ -79,7 +84,7 @@ end
 
 --Run
 do
-  local error_header
+  local error_header ---@type string?
   local use_xpcall = (debug and xpcall) and true or false
   local ok, err = (use_xpcall and xpcall or pcall)(function()
     error_header = "Load"

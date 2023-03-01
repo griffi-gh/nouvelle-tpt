@@ -8,10 +8,10 @@ local RuntimeManager = {}
 RuntimeManager.__index = RuntimeManager
 
 ---@class Runtime
----@field public id string?
----@field public name string
+---@field public id string
+---@field public name string?
 ---@field public unsafe boolean?
----@field public init function
+---@field public init function?
 ---@field public new function
 ---@field public load function
 ---@field public run function
@@ -42,7 +42,7 @@ function RuntimeManager:load_runtimes(nv_config)
   local f = fs.list(nv_config.runtime_path)
   ---@param file_name string
   for _, file_name in ipairs(f) do
-    local runtime_id = file_name:sub(1, -5)
+    --local runtime_id = file_name:sub(1, -5)
     local ok, err = pcall(function()
       local file_path = nv_config.runtime_path..file_name
       local file = assert(io.open(file_path, "rb"))
@@ -59,22 +59,30 @@ function RuntimeManager:load_runtimes(nv_config)
         __newindex = getmetatable(_G).__newindex,
       }))()
       assert(type(runtime) == "table", file_name..": not a table")
-      local function assert_runtime(key, type1, type2)
-        local err = ('Invalid API: %s is not "%s"%s'):format(key, type1, type2 and (' or "'..type2..'"') or "")
+      ---@param key string
+      ---@param type1 type
+      ---@param type2 type?
+      ---@param note string?
+      local function assert_runtime(key, type1, type2, note)
+        local err = ('Invalid API: %s is not "%s"%s%s'):format(
+          key, 
+          type1, 
+          type2 and (' or "'..type2..'"') or "",
+          note and (" (Note: %s)"):format(note) or ""
+        )
         local typ = type(runtime[key])
         assert((typ == type1) or (typ == type2), err)
       end
-      assert_runtime("id", "nil")
+      assert_runtime("id", "string")
       assert_runtime("name", "string", "nil")
       assert_runtime("unsafe", "boolean", "nil")
       assert_runtime("init", "function", "nil")
       assert_runtime("new", "function")
       assert_runtime("load", "function")
       assert_runtime("run", "function")
-      runtime.id = runtime_id
-      if runtime.name == nil then
-        runtime.name = runtime.id
-      end
+      -- if runtime.name == nil then
+      --   runtime.name = runtime.id
+      -- end
       self.runtimes[#self.runtimes+1] = runtime
       self.runtimes[runtime.id] = runtime
       runtime.nid = #self.runtimes
@@ -85,14 +93,12 @@ function RuntimeManager:load_runtimes(nv_config)
     end)
     if not ok then
       logf("Error loading runtime %s: %s", file_name, err)
-      local err_runtime = {
-        id = runtime_id,
-        error = true,
-      }
-      err_runtime.name = err_runtime.id
-      self.runtimes[err_runtime.id] = err_runtime
-      self.runtimes[#self.runtimes+1] = err_runtime
-      err_runtime.nid = #self.runtimes
+      -- local err_runtime = {
+      --   file_name = file_name,
+      --   error = tostring(err),
+      -- }
+      -- self.runtimes[#self.runtimes+1] = err_runtime
+      -- err_runtime.nid = #self.runtimes
     end
   end
   logtab(-1)
