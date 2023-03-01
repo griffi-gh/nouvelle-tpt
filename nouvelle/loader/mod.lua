@@ -1,7 +1,17 @@
+---@class Mod
+---@field public id string Unique identifier of the mod
+---@field public name string? User-friendly name of the mod
+---@field public description string? Mod description
+---@field public runtime string Id of the runtime used to run the mod
+---@field public runtime_options table Runtime-dependent options
+---@field public permissions table[] Array of mod permissions
 local Mod = {}
 Mod.__index = Mod
 
---Turns whitespace-only/empty strings and empty tables into nil
+---Turns whitespace-only/empty strings and empty tables into nil
+---@generic T
+---@param thing T
+---@return T?
 local function nullify(thing)
   local typ = type(thing)
   if typ == "table" then
@@ -16,6 +26,11 @@ local function nullify(thing)
   return thing
 end
 
+---Asserts that value has either type1 or type2
+---@param what string
+---@param thing any
+---@param type1 type
+---@param type2 type?
 local function ass_type(what, thing, type1, type2) 
   assert(
     type(thing) == type1 or type(thing) == type2,
@@ -24,6 +39,9 @@ local function ass_type(what, thing, type1, type2)
   return thing
 end
 
+---Creates a mod object from TOML manifest
+---@param manifest table
+---@return Mod
 function Mod:from_manifest(manifest)
   ass_type("manifest", manifest, "table")
   local runs_on = manifest.runtime and manifest.runtime.runs_on
@@ -38,14 +56,9 @@ function Mod:from_manifest(manifest)
   }, self)
 end
 
-function Mod:get_id()
-  return self.name or self.id
-end
-
+---Get the name of the mod  
+---Returns the mod id if the name is nil
+---@return string
 function Mod:get_name()
   return self.name or self.id
-end
-
-function Mod:get_description()
-  return self.description or ""
 end

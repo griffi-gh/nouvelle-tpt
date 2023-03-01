@@ -1,8 +1,18 @@
 local native_lib = require(.....'.native_lib')
 local fs = assert(fs, "No filesystem API")
 
+---@class RuntimeManager
+---@field private native_lib table<string, userdata> Cached native libraries
 local RuntimeManager = {}
 RuntimeManager.__index = RuntimeManager
+
+---@class Runtime
+---@field public name string
+---@field public unsafe boolean?
+---@field public init function
+---@field public new function
+---@field public load function
+---@field public run function
 
 function RuntimeManager:require_native(runtime_type, path)
   if self.native_lib[runtime_type] then
@@ -13,19 +23,23 @@ function RuntimeManager:require_native(runtime_type, path)
   return lib
 end
 
+---@param nv_config NvConfig
+---@version 5.1,JIT
 function RuntimeManager:load_runtimes(nv_config)
   log("Loading runtimes...")
+  logtab()
   assert(type(nv_config.runtime_path) == "string", "No runtime path provided")
   assert(type(nv_config.lib_path) == "string", "No lib path provided")
   local f = fs.list(nv_config.runtime_path)
   for _, file_name in ipairs(f) do
-    local runtime_id = file_name:sub(1, -5)
+    local runtime_id = file_name:sub(1, -5) ---@type string
     local ok, err = pcall(function()
       local file_path = nv_config.runtime_path..file_name
       local file = assert(io.open(file_path, "rb"))
       local data = file:read("*a")
       file:close()
       local fn = assert(load(data))
+      ---@type Runtime
       local runtime = setfenv(fn, setmetatable({
         require_native = function(library)
           return self:require_native(library, nv_config.lib_path)
@@ -71,7 +85,8 @@ function RuntimeManager:load_runtimes(nv_config)
       err_runtime.nid = #self.runtimes
     end
   end
-  logf("Loaded %d runtime%s!", #self.runtimes, (#self.runtimes ~= 1) and "s" or "")
+  logtab(-1)
+  --logf("Loaded %d runtime%s!", #self.runtimes, (#self.runtimes ~= 1) and "s" or "")
   return self
 end
 

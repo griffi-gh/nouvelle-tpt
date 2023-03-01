@@ -48,8 +48,12 @@ do
   log_file:write("")
   log_file:close()
   log_file = assert(io.open(bootstrap.log_file, "a+b"))
+  local tab = 0
+  local function logtab(t)
+    tab = tab + (t or 1)
+  end
   local function log(...)
-    local mesage = table.concat({...}, " ")
+    local mesage = (" "):rep(tab * 2)..table.concat({...}, " ")
     log_file:write(mesage.."\n")
   end
   local function logf(...)
@@ -60,6 +64,7 @@ do
   end)
   setglobal("log", log)
   setglobal("logf", logf)
+  setglobal("logtab", logtab)
   log("BOOTSTRAP LOGGER: "..bootstrap.friendly_name)
 end
 
@@ -75,7 +80,7 @@ end
 --Run
 do
   local error_header
-  local use_xpcall = debug and xpcall
+  local use_xpcall = (debug and xpcall) and true or false
   local ok, err = (use_xpcall and xpcall or pcall)(function()
     error_header = "Load"
     local init = require(bootstrap.entry_point)

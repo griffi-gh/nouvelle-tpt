@@ -1,9 +1,12 @@
-local function load_native_library(version, bin_path)
+---load native library using it's type and path to binaries
+---@version JIT
+---@param runtime_type string
+---@param bin_path string
+local function load_native_library(runtime_type, bin_path)
   local ffi = require("ffi")
 
   assert(type(bin_path) == "string", "No bin_path provided")
-  assert(type(version) == "string", "No runtime_type provided")
-  --assert(runtime_type[version], "Invalid runtime_type")
+  assert(type(runtime_type) == "string", "No runtime_type provided")
   
   --find the dll suffix
   local dll_suffix, dll_ext
@@ -47,7 +50,7 @@ local function load_native_library(version, bin_path)
 
   --Find path to headers and load them
   do
-    local headers_path = ("./%s/%s/%s-headers.i"):format(bin_path, version, version)
+    local headers_path = ("./%s/%s/%s-headers.i"):format(bin_path, runtime_type, runtime_type)
     local header_data
     do
       local file = assert(io.open(headers_path, "rb"))
@@ -60,9 +63,9 @@ local function load_native_library(version, bin_path)
   --Load dll binary
   do
     --find binary filename
-    local binary_name = ("%s-%s%s"):format(version, dll_suffix, dll_ext)
+    local binary_name = ("%s-%s%s"):format(runtime_type, dll_suffix, dll_ext)
     --Find binary path and load binary
-    local binary_path = ("./%s/%s/%s"):format(bin_path, version, binary_name)
+    local binary_path = ("./%s/%s/%s"):format(bin_path, runtime_type, binary_name)
     if getglobal("fs") and (not fs.exists(binary_path)) then
       error("No binary for platform "..dll_suffix)
     end

@@ -1,0 +1,17 @@
+{
+  "lua.debug.settings.luaVersion": "jit",
+  "Lua.diagnostics.globals": [
+    "jit",
+    "tpt",
+    "event",
+    "evt",
+    "fs",
+    "log",
+    "logtab",
+    "logf",
+    "plat",
+    "platform",
+    //only in runtimes:
+    "require_native",
+  ]
+}
