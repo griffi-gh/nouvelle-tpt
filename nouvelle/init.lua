@@ -4,6 +4,7 @@ local RuntimeManager = require(.....'.runtimes')
 
 local nv_config = {
   path = "./nouvelle/",
+  mod_path = "./Mods/",
   lib_path = "./nouvelle-native/",
   runtime_path = "./nouvelle-runtimes/",
 }
