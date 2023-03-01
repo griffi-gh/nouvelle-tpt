@@ -1,16 +1,6 @@
-local ffi = require("ffi")
-
--- local runtime_type = {
---   luajit = "luajit",
--- }
-
--- local supported_runtimes = {
---   luajit_linux64 = true,
---   luajit_win64 = true,
---   luajit_win32 = true,
--- }
-
 local function load_native_library(version, bin_path)
+  local ffi = require("ffi")
+
   assert(type(bin_path) == "string", "No bin_path provided")
   assert(type(version) == "string", "No runtime_type provided")
   --assert(runtime_type[version], "Invalid runtime_type")
@@ -19,7 +9,15 @@ local function load_native_library(version, bin_path)
   local dll_suffix, dll_ext
   if getglobal "platform" then
     dll_suffix = platform.platform():lower()
-    dll_ext = "" --empty for automatic
+    if dll_suffix == "win32" or dll_suffix == "win64" then
+      dll_ext = ".dll"
+    elseif dll_suffix == "lin32" or dll_suffix == "lin64" then
+      dll_ext = ".so"
+    elseif dll_suffix == "macosarm" or dll_suffix == "macosx" then
+      dll_ext = ".dylib"
+    else
+      error("Unknown OS")
+    end
   else
     local dll_arch, dll_os
     --Get bits
@@ -63,9 +61,11 @@ local function load_native_library(version, bin_path)
   do
     --find binary filename
     local binary_name = ("%s-%s%s"):format(version, dll_suffix, dll_ext)
-    --assert(supported_runtimes[binary_name], ("Runtime %s not supported"):format(binary_name))
     --Find binary path and load binary
     local binary_path = ("./%s/%s/%s"):format(bin_path, version, binary_name)
+    if getglobal("fs") and (not fs.exists(binary_path)) then
+      error("No binary for platform "..dll_suffix)
+    end
     local lib = ffi.load(binary_path)
     return lib
   end

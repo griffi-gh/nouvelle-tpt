@@ -36,7 +36,7 @@ function RuntimeManager:load_runtimes(nv_config)
       }))()
       assert(type(runtime) == "table", file_name..": not a table")
       local function assert_runtime(key, type1, type2)
-        local err = ("Invalid API: %s is not a %s%s"):format(key, type1, type2 and (" or "..type2) or "")
+        local err = ('Invalid API: %s is not "%s"%s'):format(key, type1, type2 and (' or "'..type2..'"') or "")
         local typ = type(runtime[key])
         assert((typ == type1) or (typ == type2), err)
       end
