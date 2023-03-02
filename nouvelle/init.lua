@@ -1,4 +1,4 @@
-assert(getglobal "BOOTSTRAP", "Loaded without bootstrap script")
+assert(_G.BOOTSTRAP, "Loaded without bootstrap script")
 
 local RuntimeManager = require(.....'.runtimes')
 
