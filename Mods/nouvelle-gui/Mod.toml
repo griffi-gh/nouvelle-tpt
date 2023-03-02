@@ -2,6 +2,7 @@
 id = "nouvelle-gui"
 name = "Nouvelle GUI"
 description = "Graphical interface for the Nouvelle mod manager"
+update = false
 
 [runtime]
 runs_on = "luajit"

@@ -44,7 +44,7 @@ function RuntimeManager:load_runtimes(nv_config)
   for _, file_name in ipairs(f) do
     --local runtime_id = file_name:sub(1, -5)
     local ok, err = pcall(function()
-      local file_path = nv_config.runtime_path..file_name
+      local file_path = nv_config.runtime_path.."/"..file_name
       local file = assert(io.open(file_path, "rb"))
       local data = file:read("*a")
       file:close()
