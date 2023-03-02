@@ -2,7 +2,8 @@
 local bootstrap = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
-  log_file = "nouvelle.log",
+  log_file = "./nouvelle.log",
+  safemode_file = "./safemode.bootstrap",
 }
 
 -------------------------------------
@@ -30,12 +31,21 @@ setmetatable(_G, {
 })
 
 --Functions to set/get globals
-rawset(_G, "setglobal", function(key, value)
+
+---Set _G.key = value
+---@param key any
+---@param value any
+local function setglobal(key, value)
   rawset(_G, key, value)
-end)
-rawset(_G, "getglobal", function(key)
+end
+---Get _G.key
+---@param key any
+---@return any
+local function getglobal(key)
   return rawget(_G, key)
-end)
+end
+rawset(_G, "setglobal", setglobal)
+rawset(_G, "getglobal", getglobal)
 
 --Prevent global TPTMP from loading unsandboxed
 if tpt.version.jacob1s_mod then
@@ -82,6 +92,48 @@ if getglobal("jit") then
   end
 end
 
+--Safe mode
+if (not getglobal('fs')) or fs.exists(bootstrap.safemode_file) then
+  local safemode_level = io.open(bootstrap.safemode_file, "rb")
+  if safemode_level then
+    local level = safemode_level:read"*n"
+    if level > 0 then
+      print("Safe mode activated")
+      setglobal('SAFE_MODE', level)
+    end
+  end
+end
+
+---@alias safemode_level 0|1|2
+
+---Enter safe mode
+---@param level safemode_level
+local function safemode(level) 
+  level = level or 1
+  local f = assert(io.open(bootstrap.safemode_file, "wb"), "Failed to open "..bootstrap.safemode_file)
+  f:write(tostring(level))
+  f:close()
+  if level > 0 then
+    setglobal('SAFE_MODE', level)
+  else 
+    setglobal('SAFE_MODE', nil)
+    local ok = (fs and fs.removeFile or os.remove)(bootstrap.safemode_file) ---@type boolean
+    if not ok then print("File delete failed. Don't worry, safe mode should still be disabled") end
+  end
+end
+setglobal("safemode", safemode)
+
+---Display warning to the user
+if getglobal('SAFE_MODE') then
+  ---@type boolean
+  local do_disable = tpt.confirm("Safe mode", "NOTE: Safe mode activated due to past errors, your mods won't be loded", "Disable")
+  if do_disable then
+    safemode(0)
+  elseif getglobal('SAFE_MODE') >= 2 then 
+    return
+  end
+end
+
 --Run
 do
   local error_header ---@type string?
@@ -101,6 +153,6 @@ do
         log("failed to copy error to clipboard")
       end
     end
-    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game"):format(bootstrap.friendly_name, error_header, strerr))
+    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game\nIf this keeps happening:\n\t- open the console (~), enter \"safemode()\" (without the quotes) and press Enter\n\t - Report the issue to the developer "):format(bootstrap.friendly_name, error_header, strerr))
   end
 end
