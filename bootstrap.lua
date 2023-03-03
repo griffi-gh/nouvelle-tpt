@@ -3,21 +3,21 @@ local BOOTSTRAP_PRODUCT = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
   log_path = "./nouvelle.log",
-  safemode_file = "./safemode.bootstrap",
-  bootstrap_global = nil,
   requireable = true,
-}
+} ---@type Bootstrap
 
 -------------------------------------
 
 ---@class Bootstrap
----@field public friendly_name string
----@field public entry_point string
----@field public log_path string
----@field public safemode_file string
----@field public bootstrap_global string?
----@field public requireable boolean?
+---@field public friendly_name string Name of the software to load
+---@field public entry_point string Entry point module to load
+---@field public log_path string Path to store log files
+---@field public safe_mode_file string? Setting this to nil completely disables all safe mode functionality
+---@field public bootstrap_global string? Expose Bootstrap table at this global (optional)
+---@field public requireable (boolean | string)? Expose Bootstrap as require module (set to a string to override the name)
+---@field private keystore table Key storage for arbitrary data 
 local Bootstrap = BOOTSTRAP_PRODUCT
+Bootstrap.keystore = {}
 
 --Check for tpt
 assert(rawget(_G, "tpt"), "This is a The Powder Toy mod")
@@ -31,7 +31,7 @@ elseif Bootstrap.requireable then
   --If global variable is not used, check package cache instead!
   assert(type(package.loaded[...]) ~= "table", "Bootstrap already loaded")
 else
-  error("No api expose standard found, enable global or requireable")
+  error("No expose standard found, enable bootstrap_global or requireable")
 end
 
 --Change path
@@ -48,19 +48,22 @@ setmetatable(_G, {
 })
 
 --Functions to set/get globals
+do
+  ---Set _G.key = value
+  ---@param key any
+  ---@param value any
+  function Bootstrap:set_global(key, value)
+    rawset(_G, key, value)
+  end
 
----Set _G.key = value
----@param key any
----@param value any
-function Bootstrap:set_global(key, value)
-  rawset(_G, key, value)
+  ---Get _G.key
+  ---@param key any
+  ---@return any
+  function Bootstrap:get_global(key)
+    return rawget(_G, key)
+  end
 end
----Get _G.key
----@param key any
----@return any
-function Bootstrap:get_global(key)
-  return rawget(_G, key)
-end
+
 
 --Prevent global TPTMP from loading unsandboxed
 if tpt.version.jacob1s_mod then
@@ -98,6 +101,29 @@ do
   Bootstrap:log("BOOTSTRAP LOGGER: "..Bootstrap.friendly_name)
 end
 
+--Keystore
+do
+  ---Set keystore[key]
+  ---@param key any
+  ---@param value any?
+  function Bootstrap:set_keystore(key, value)
+    self.keystore[key] = value
+  end
+
+  ---Get keystore[key]
+  ---@param key any
+  ---@return any?
+  function Bootstrap:get_keystore(key)
+    return self.keystore[key]
+  end
+
+  ---Replace keystore object with a new one
+  ---Destroys all data in keystore
+  function Bootstrap:drop_keystore()
+    self.keystore = {}
+  end
+end
+
 --Make sure that JIT is not disabled
 if Bootstrap:get_global("jit") then 
   if pcall(jit.on) then
@@ -107,50 +133,87 @@ if Bootstrap:get_global("jit") then
   end
 end
 
---Safe mode
-if (not Bootstrap:get_global('fs')) or fs.exists(Bootstrap.safemode_file) then
-  local safemode_level = io.open(Bootstrap.safemode_file, "rb")
-  if safemode_level then
-    local level = safemode_level:read"*n"
+--Handle safe mode
+do
+  ---@alias safemode_level 0|1|2
+
+  ---Set safe mode level  
+  ---  
+  ---0 - safe mode disabled  
+  ---1 - safe mode enabled (handled by the loaded module)  
+  ---2 - super safe mode enabled (handled by bootstrap) 
+  ---   
+  ---Bootstrap.safe_mode_file must be enabled  
+  ---If no arguments are provided, this defaults to mode 1
+  ---@param level safemode_level?
+  function Bootstrap:set_safe_mode(level) 
+    if not self.safe_mode_file then
+      error("Safe mode not allowed")
+    end
+    level = level or 1
+    local f = assert(io.open(self.safe_mode_file, "wb"), "Failed to open "..self.safe_mode_file)
+    f:write(tostring(level))
+    f:close()
     if level > 0 then
-      print("Safe mode activated")
-      Bootstrap.safe_mode = level
+      self.safe_mode = level
+    else 
+      self.safe_mode = nil
+      local ok = (fs and fs.removeFile or os.remove)(self.safe_mode_file) ---@type boolean
+      if not ok then print("File delete failed. Don't worry, safe mode should still be disabled") end
+    end
+  end
+
+  if Bootstrap.safe_mode_file and ((not Bootstrap:get_global('fs')) or fs.exists(Bootstrap.safe_mode_file)) then
+    --Read safe mode file
+    local safemode_level = io.open(Bootstrap.safe_mode_file, "rb")
+    if safemode_level then
+      local level = safemode_level:read"*n"
+      if level > 0 then
+        print("Safe mode activated")
+        Bootstrap.safe_mode = level
+      end
+    end
+
+    ---Display warning to the user
+    if Bootstrap.safe_mode and (Bootstrap.safe_mode >= 2) then
+      ---@type boolean
+      local do_disable = tpt.confirm("Safe mode", "Safe mode activated\n"..Bootstrap.friendly_name.." won't be loaded", "Exit safe mode")
+      if do_disable then
+        Bootstrap:set_safe_mode(0)
+      else
+        return
+      end
     end
   end
 end
 
----@alias safemode_level 0|1|2
-
----Enter safe mode
----@param level safemode_level
-function Bootstrap:set_safe_mode(level) 
-  level = level or 1
-  local f = assert(io.open(self.safemode_file, "wb"), "Failed to open "..self.safemode_file)
-  f:write(tostring(level))
-  f:close()
-  if level > 0 then
-    self.safe_mode = level
-  else 
-    self.safe_mode = nil
-    local ok = (fs and fs.removeFile or os.remove)(self.safemode_file) ---@type boolean
-    if not ok then print("File delete failed. Don't worry, safe mode should still be disabled") end
-  end
-end
-
----Display warning to the user
-if Bootstrap.safe_mode then
-  ---@type boolean
-  local do_disable = tpt.confirm("Safe mode", "NOTE: Safe mode activated due to past errors, your mods won't be loded", "Disable")
-  if do_disable then
-    Bootstrap:set_safe_mode(0)
-  elseif Bootstrap.safe_mode >= 2 then
-    return
-  end
-end
-
+--Store in package cache (to make `require("bootstrap")` work)
+--If Bootstrap.requireable is enabled
 if Bootstrap.requireable then
-  --Store in package cache (to make `require("bootstrap")` work)
-  package.loaded[...] = Bootstrap
+  local require_path ---@type string
+  if type(Bootstrap.requireable) == "string" then
+    require_path = tostring(Bootstrap.requireable) --tostring is needed here to suppress warning
+  else
+    require_path = ...
+  end
+  package.loaded[require_path] = Bootstrap
+  --Verify that require works correctly
+  do
+    ---@type boolean, Bootstrap?
+    local req_ok, req_Bootstrap = pcall(require, require_path)
+    assert(
+      req_ok, 
+      "Requireable: Require error"
+    )
+    assert(
+      type(req_Bootstrap) == "table", 
+      "Requireable: Invalid type returned: "..type(req_Bootstrap)
+    )
+    assert(
+      req_Bootstrap == Bootstrap, 
+      "Requireable: Table not equal"
+    )
+  end
 end
 
 --Run
@@ -159,7 +222,7 @@ do
   local use_xpcall = (debug and xpcall) and true or false
   local ok, err = (use_xpcall and xpcall or pcall)(function()
     error_header = "Load"
-    local init = require(Bootstrap.entry_point)
+    local init = require(assert(Bootstrap.entry_point, "No entry_point provided"))
     error_header = "Init"
     init()
     error_header = "Runtime"
@@ -172,7 +235,7 @@ do
         Bootstrap:log("failed to copy error to clipboard")
       end
     end
-    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game\nHere's how to resolve this issue:\n\t - Report the issue to the developer "):format(Bootstrap.friendly_name, error_header, strerr))
+    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game\nTry doing this:\n\t - Report the issue to the developer on GitHub or Discord"):format(Bootstrap.friendly_name, error_header, strerr))
   end
 end
 
