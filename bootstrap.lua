@@ -3,6 +3,7 @@ local BOOTSTRAP_PRODUCT = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
   log_path = "./nouvelle.log",
+  bootstrap_marker_global = "BOOTSTRAP_LOADED",
   requireable = true,
 } ---@type Bootstrap
 
@@ -14,6 +15,7 @@ local BOOTSTRAP_PRODUCT = {
 ---@field public log_path string Path to store log files
 ---@field public safe_mode_file string? Setting this to nil completely disables all safe mode functionality
 ---@field public bootstrap_global string? Expose Bootstrap table at this global (optional)
+---@field public bootstrap_marker_global string? This global is used to check if bootstrap is already used
 ---@field public requireable (boolean | string)? Expose Bootstrap as require module (set to a string to override the name)
 ---@field private keystore table Key storage for arbitrary data 
 local Bootstrap = BOOTSTRAP_PRODUCT
@@ -22,16 +24,32 @@ Bootstrap.keystore = {}
 --Check for tpt
 assert(rawget(_G, "tpt"), "This is a The Powder Toy mod")
 
-if Bootstrap.bootstrap_global then
+local function already_loaded()
+  print("Bootstrap already loaded")
+end
+
+if Bootstrap.bootstrap_marker_global then
   --Check if bootstrap is already loded
-  if rawget(_G, Bootstrap.bootstrap_global) then return end
-  --Set global BOOTSTRAP variable
+  if rawget(_G, Bootstrap.bootstrap_marker_global) then
+    return already_loaded()
+  end
+  --Set global variable
+  rawset(_G, Bootstrap.bootstrap_marker_global, true)
+elseif Bootstrap.bootstrap_global then
+  --Check if bootstrap is already loded
+  if rawget(_G, Bootstrap.bootstrap_global) then
+    return already_loaded()
+  end
+  --Set global variable
   rawset(_G, Bootstrap.bootstrap_global, Bootstrap)
 elseif Bootstrap.requireable then
   --If global variable is not used, check package cache instead!
-  assert(type(package.loaded[...]) ~= "table", "Bootstrap already loaded")
+  --This isn't as reliable but better then nothing
+  if type(package.loaded[...]) == "table" then
+    return already_loaded()
+  end
 else
-  error("No expose standard found, enable bootstrap_global or requireable")
+  error("No expose standard found, enable bootstrap_global, bootstrap_marker_global or requireable")
 end
 
 --Change path
@@ -195,6 +213,7 @@ if Bootstrap.requireable then
     require_path = tostring(Bootstrap.requireable) --tostring is needed here to suppress warning
   else
     require_path = ...
+    assert(require_path, "Require not used!")
   end
   package.loaded[require_path] = Bootstrap
   --Verify that require works correctly
