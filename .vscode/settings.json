@@ -7,9 +7,6 @@
     "event",
     "evt",
     "fs",
-    "log",
-    "logtab",
-    "logf",
     "plat",
     "platform",
     //only in runtimes:

@@ -1,3 +1,4 @@
+local Bootstrap = require("bootstrap")
 local native_lib = require(.....'.native_lib')
 local fs = assert(fs, "No filesystem API")
 
@@ -35,8 +36,8 @@ end
 ---@param nv_config NvConfig
 ---@version 5.1,JIT
 function RuntimeManager:load_runtimes(nv_config)
-  log("Loading runtimes...")
-  logtab()
+  Bootstrap:log("Loading runtimes...")
+  Bootstrap:log_tab()
   assert(type(nv_config.runtime_path) == "string", "No runtime path provided")
   assert(type(nv_config.lib_path) == "string", "No lib path provided")
   local f = fs.list(nv_config.runtime_path)
@@ -89,10 +90,10 @@ function RuntimeManager:load_runtimes(nv_config)
       if runtime.init then
         runtime:init()
       end
-      logf("Loaded %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
+      Bootstrap:log_fmt("Loaded %s (id: %s; nid: %d)", runtime.name, runtime.id, runtime.nid)
     end)
     if not ok then
-      logf("Error loading runtime %s: %s", file_name, err)
+      Bootstrap:log_fmt("Error loading runtime %s: %s", file_name, err)
       -- local err_runtime = {
       --   file_name = file_name,
       --   error = tostring(err),
@@ -101,7 +102,7 @@ function RuntimeManager:load_runtimes(nv_config)
       -- err_runtime.nid = #self.runtimes
     end
   end
-  logtab(-1)
+  Bootstrap:log_tab(-1)
   --logf("Loaded %d runtime%s!", #self.runtimes, (#self.runtimes ~= 1) and "s" or "")
   return self
 end

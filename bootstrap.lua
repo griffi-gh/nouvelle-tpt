@@ -1,21 +1,38 @@
---BOOTSTRAP product information
-local bootstrap = {
+---BOOTSTRAP product information
+local BOOTSTRAP_PRODUCT = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
-  log_file = "./nouvelle.log",
+  log_path = "./nouvelle.log",
   safemode_file = "./safemode.bootstrap",
+  bootstrap_global = nil,
+  requireable = true,
 }
 
 -------------------------------------
 
+---@class Bootstrap
+---@field public friendly_name string
+---@field public entry_point string
+---@field public log_path string
+---@field public safemode_file string
+---@field public bootstrap_global string?
+---@field public requireable boolean?
+local Bootstrap = BOOTSTRAP_PRODUCT
+
 --Check for tpt
 assert(rawget(_G, "tpt"), "This is a The Powder Toy mod")
 
---Check if bootstrap is already loded
-if rawget(_G, "BOOTSTRAP") then return end
-
---Set global BOOTSTRAP variable
-rawset(_G, "BOOTSTRAP", bootstrap)
+if Bootstrap.bootstrap_global then
+  --Check if bootstrap is already loded
+  if rawget(_G, Bootstrap.bootstrap_global) then return end
+  --Set global BOOTSTRAP variable
+  rawset(_G, Bootstrap.bootstrap_global, Bootstrap)
+elseif Bootstrap.requireable then
+  --If global variable is not used, check package cache instead!
+  assert(type(package.loaded[...]) ~= "table", "Bootstrap already loaded")
+else
+  error("No api expose standard found, enable global or requireable")
+end
 
 --Change path
 package.path = "?.lua;?/init.lua"
@@ -35,70 +52,69 @@ setmetatable(_G, {
 ---Set _G.key = value
 ---@param key any
 ---@param value any
-local function setglobal(key, value)
+function Bootstrap:set_global(key, value)
   rawset(_G, key, value)
 end
 ---Get _G.key
 ---@param key any
 ---@return any
-local function getglobal(key)
+function Bootstrap:get_global(key)
   return rawget(_G, key)
 end
-rawset(_G, "setglobal", setglobal)
-rawset(_G, "getglobal", getglobal)
 
 --Prevent global TPTMP from loading unsandboxed
 if tpt.version.jacob1s_mod then
-  setglobal("TPTMP", { version = math.huge })
+  Bootstrap:set_global("TPTMP", { version = math.huge })
 end
 
 --Logging
 do
-  local log_file = assert(io.open(bootstrap.log_file, "wb"))
-  log_file:write("")
-  log_file:close()
-  log_file = assert(io.open(bootstrap.log_file, "a+b"))
+  do 
+    --Empty the file
+    local log_file = assert(io.open(Bootstrap.log_path, "wb"))
+    log_file:write("")
+    log_file:close()
+  end
+  Bootstrap.log_file = assert(io.open(Bootstrap.log_path, "a+b"))
+
   local tab = 0
   ---@param t number?
-  local function logtab(t)
+  function Bootstrap:log_tab(t)
     tab = tab + (math.floor(t or 1))
   end
-  ---@param ... string
-  local function log(...)
+  ---@param ... any
+  function Bootstrap:log(...)
     local message = (" "):rep(tab * 2)..table.concat({...}, " ")
-    log_file:write(message.."\n")
+    self.log_file:write(message.."\n")
   end
   ---@param fmt string
-  ---@param ... string?
-  local function logf(fmt, ...)
-    log(string.format(fmt, ...))
+  ---@param ... any?
+  function Bootstrap:log_fmt(fmt, ...)
+    self:log(string.format(fmt, ...))
   end
   event.register(event.close, function()
-    log_file:close()
+    Bootstrap.log_file:close()
   end)
-  setglobal("log", log)
-  setglobal("logf", logf)
-  setglobal("logtab", logtab)
-  log("BOOTSTRAP LOGGER: "..bootstrap.friendly_name)
+  Bootstrap:log("BOOTSTRAP LOGGER: "..Bootstrap.friendly_name)
 end
 
 --Make sure that JIT is not disabled
-if getglobal("jit") then 
+if Bootstrap:get_global("jit") then 
   if pcall(jit.on) then
-    log("JIT: on")
+    Bootstrap:log("JIT: on")
   else
-    log("JIT: off")
+    Bootstrap:log("JIT: off")
   end
 end
 
 --Safe mode
-if (not getglobal('fs')) or fs.exists(bootstrap.safemode_file) then
-  local safemode_level = io.open(bootstrap.safemode_file, "rb")
+if (not Bootstrap:get_global('fs')) or fs.exists(Bootstrap.safemode_file) then
+  local safemode_level = io.open(Bootstrap.safemode_file, "rb")
   if safemode_level then
     local level = safemode_level:read"*n"
     if level > 0 then
       print("Safe mode activated")
-      setglobal('SAFE_MODE', level)
+      Bootstrap.safe_mode = level
     end
   end
 end
@@ -107,30 +123,34 @@ end
 
 ---Enter safe mode
 ---@param level safemode_level
-local function safemode(level) 
+function Bootstrap:set_safe_mode(level) 
   level = level or 1
-  local f = assert(io.open(bootstrap.safemode_file, "wb"), "Failed to open "..bootstrap.safemode_file)
+  local f = assert(io.open(self.safemode_file, "wb"), "Failed to open "..self.safemode_file)
   f:write(tostring(level))
   f:close()
   if level > 0 then
-    setglobal('SAFE_MODE', level)
+    self.safe_mode = level
   else 
-    setglobal('SAFE_MODE', nil)
-    local ok = (fs and fs.removeFile or os.remove)(bootstrap.safemode_file) ---@type boolean
+    self.safe_mode = nil
+    local ok = (fs and fs.removeFile or os.remove)(self.safemode_file) ---@type boolean
     if not ok then print("File delete failed. Don't worry, safe mode should still be disabled") end
   end
 end
-setglobal("safemode", safemode)
 
 ---Display warning to the user
-if getglobal('SAFE_MODE') then
+if Bootstrap.safe_mode then
   ---@type boolean
   local do_disable = tpt.confirm("Safe mode", "NOTE: Safe mode activated due to past errors, your mods won't be loded", "Disable")
   if do_disable then
-    safemode(0)
-  elseif getglobal('SAFE_MODE') >= 2 then 
+    Bootstrap:set_safe_mode(0)
+  elseif Bootstrap.safe_mode >= 2 then
     return
   end
+end
+
+if Bootstrap.requireable then
+  --Store in package cache (to make `require("bootstrap")` work)
+  package.loaded[...] = Bootstrap
 end
 
 --Run
@@ -139,19 +159,22 @@ do
   local use_xpcall = (debug and xpcall) and true or false
   local ok, err = (use_xpcall and xpcall or pcall)(function()
     error_header = "Load"
-    local init = require(bootstrap.entry_point)
+    local init = require(Bootstrap.entry_point)
     error_header = "Init"
     init()
     error_header = "Runtime"
   end, use_xpcall and debug.traceback)
   if not ok then
     local strerr = tostring(err)
-    logf("====== ERROR ======\n%s\n===================", strerr)
-    if getglobal "platform" then
-      if not pcall(platform.clipboardPaste, bootstrap.friendly_name.."ERROR\n"..strerr) then
-        log("failed to copy error to clipboard")
+    Bootstrap:log_fmt("====== ERROR ======\n%s\n===================", strerr)
+    if Bootstrap:get_global("platform") then
+      if not pcall(platform.clipboardPaste, Bootstrap.friendly_name.."ERROR\n"..strerr) then
+        Bootstrap:log("failed to copy error to clipboard")
       end
     end
-    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game\nIf this keeps happening:\n\t- open the console (~), enter \"safemode()\" (without the quotes) and press Enter\n\t - Report the issue to the developer "):format(bootstrap.friendly_name, error_header, strerr))
+    tpt.throw_error(("%s: %s error\n\n====== ERROR ======\n%s\n===================\n\nPlease restart the game\nHere's how to resolve this issue:\n\t - Report the issue to the developer "):format(Bootstrap.friendly_name, error_header, strerr))
   end
 end
+
+--For diagnostic tools onlyBootstrap:
+return Bootstrap

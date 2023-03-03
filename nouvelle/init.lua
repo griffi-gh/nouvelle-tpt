@@ -1,5 +1,4 @@
-assert(_G.BOOTSTRAP, "Loaded without bootstrap script")
-
+local Bootstrap = require('bootstrap')
 local RuntimeManager = require(.....'.runtimes')
 
 local nv_config = { ---@class NvConfig
@@ -22,21 +21,20 @@ function Nouvelle:new() ---@return Nouvelle
 end
 
 function Nouvelle:init() ---@return Nouvelle
-  log("Init Nouvelle...")
-  logtab()
+  Bootstrap:log("Init Nouvelle...")
+  Bootstrap:log_tab()
   self.runtime_manager:load_runtimes(nv_config)
-  logtab(-1)
+  Bootstrap:log_tab(-1)
   return self
 end
 
 return function()
-  log("[*] Init process started")
-  logtab()
+  Bootstrap:log("[*] Init process started")
+  Bootstrap:log_tab()
   local time = os.clock()
   local nouvelle = Nouvelle:new():init()
-  rawset(_G, "NOUVELLE", nouvelle)
   time = os.clock() - time
-  logtab(-1)
-  logf("[*] Done in %.2f s", time)
+  Bootstrap:log_tab(-1)
+  Bootstrap:log_fmt("[*] Done in %.2f s", time)
   nouvelle.runtime_manager.runtimes.luajit:new():load("error('Hello world')"):run()
 end

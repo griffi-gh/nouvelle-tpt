@@ -1,4 +1,5 @@
-local Runtime = { 
+local Runtime = {
+  id = "no_runtime", 
   unsafe = true,
 }
 Runtime.__index = Runtime

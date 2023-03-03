@@ -1,3 +1,5 @@
+local Bootstrap = require("bootstrap")
+
 ---load native library using it's type and path to binaries
 ---@version JIT
 ---@param runtime_type string
@@ -11,7 +13,7 @@ local function load_native_library(runtime_type, bin_path)
   
   --find the dll suffix
   local dll_suffix, dll_ext
-  if getglobal "platform" then
+  if Bootstrap:get_global("platform") then
     dll_suffix = platform.platform():lower()
     if dll_suffix == "win32" or dll_suffix == "win64" then
       dll_ext = ".dll"
@@ -67,7 +69,7 @@ local function load_native_library(runtime_type, bin_path)
     local binary_name = ("%s-%s%s"):format(runtime_type, dll_suffix, dll_ext)
     --Find binary path and load binary
     local binary_path = ("./%s/%s/%s"):format(bin_path, runtime_type, binary_name)
-    if getglobal("fs") and (not fs.exists(binary_path)) then
+    if Bootstrap:get_global("fs") and (not fs.exists(binary_path)) then
       error("No binary for platform "..dll_suffix)
     end
     local lib = ffi.load(binary_path)

@@ -1,4 +1,5 @@
-local Runtime = { 
+local Runtime = {
+  id = "luajit",
   name = "LuaJIT" 
 }
 Runtime.__index = Runtime
