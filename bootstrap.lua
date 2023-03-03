@@ -76,7 +76,6 @@ do
   event.register(event.close, function()
     log_file:close()
   end)
-  logtab(0.5)
   setglobal("log", log)
   setglobal("logf", logf)
   setglobal("logtab", logtab)
