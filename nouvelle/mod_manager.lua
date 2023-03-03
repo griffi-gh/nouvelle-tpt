@@ -1,5 +1,4 @@
----@type Mod
-local Mod = require('mod')
+local Mod = require(.....'.mod') ---@type Mod
 
 ---@class ModManager
 ---@field mods table<string | number, Mod>

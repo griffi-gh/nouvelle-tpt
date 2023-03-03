@@ -77,6 +77,7 @@ local function load_native_library(runtime_type, bin_path)
   end
 end
 
+---@class NativeLib
 return {
   load_native_library = load_native_library,
 }

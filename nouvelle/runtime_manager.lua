@@ -1,5 +1,5 @@
 local Bootstrap = require("bootstrap")
-local native_lib = require(.....'.native_lib')
+local native_lib = require(.....'.native_lib') ---@type NativeLib
 local fs = assert(fs, "No filesystem API")
 
 ---@class RuntimeManager

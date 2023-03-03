@@ -69,3 +69,5 @@ end
 function Mod:get_name()
   return self.name or self.id
 end
+
+return Mod

@@ -239,5 +239,6 @@ do
   end
 end
 
---For diagnostic tools onlyBootstrap:
+---For emmylua
+---@type Bootstrap
 return Bootstrap

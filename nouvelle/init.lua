@@ -1,5 +1,6 @@
 local Bootstrap = require('bootstrap')
-local RuntimeManager = require(.....'.runtimes')
+local RuntimeManager = require(.....'.runtime_manager') ---@type RuntimeManager
+local ModManager = require(.....'.mod_manager') ---@type ModManager
 
 local nv_config = { ---@class NvConfig
   path = "./nouvelle/",
