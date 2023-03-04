@@ -52,6 +52,8 @@ else
   error("No expose standard found, enable bootstrap_global, bootstrap_marker_global or requireable")
 end
 
+local outer_vararg = ...
+
 --Change path
 package.path = "?.lua;?/init.lua"
 
@@ -140,6 +142,14 @@ do
   function Bootstrap:drop_keystore()
     self.keystore = {}
   end
+end
+
+
+
+---Require relative to bootstrapped module
+---@param path string
+function Bootstrap:require(path)
+  require(self.entry_point..'.'..path)
 end
 
 --Make sure that JIT is not disabled
