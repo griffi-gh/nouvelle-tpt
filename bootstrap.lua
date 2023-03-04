@@ -9,6 +9,8 @@ local BOOTSTRAP_PRODUCT = {
 
 -------------------------------------
 
+local require_path = ...
+
 ---@class Bootstrap
 ---@field public friendly_name string Name of the software to load
 ---@field public entry_point string Entry point module to load
@@ -45,14 +47,12 @@ elseif Bootstrap.bootstrap_global then
 elseif Bootstrap.requireable then
   --If global variable is not used, check package cache instead!
   --This isn't as reliable but better then nothing
-  if type(package.loaded[...]) == "table" then
+  if type(package.loaded[require_path]) == "table" then
     return already_loaded()
   end
 else
   error("No expose standard found, enable bootstrap_global, bootstrap_marker_global or requireable")
 end
-
-local outer_vararg = ...
 
 --Change path
 package.path = "?.lua;?/init.lua"
@@ -218,18 +218,18 @@ end
 --Store in package cache (to make `require("bootstrap")` work)
 --If Bootstrap.requireable is enabled
 if Bootstrap.requireable then
-  local require_path ---@type string
+  local l_require_path ---@type string
   if type(Bootstrap.requireable) == "string" then
-    require_path = tostring(Bootstrap.requireable) --tostring is needed here to suppress warning
+    l_require_path = tostring(Bootstrap.requireable) --tostring is needed here to suppress warning
   else
-    require_path = ...
-    assert(require_path, "Require not used!")
+    l_require_path = require_path
+    assert(l_require_path, "Require not used!")
   end
-  package.loaded[require_path] = Bootstrap
+  package.loaded[l_require_path] = Bootstrap
   --Verify that require works correctly
   do
     ---@type boolean, Bootstrap?
-    local req_ok, req_Bootstrap = pcall(require, require_path)
+    local req_ok, req_Bootstrap = pcall(require, l_require_path)
     assert(
       req_ok, 
       "Requireable: Require error"
