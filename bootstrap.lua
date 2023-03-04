@@ -3,7 +3,7 @@ local BOOTSTRAP_PRODUCT = {
   friendly_name = "Nouvelle",
   entry_point = "nouvelle",
   log_path = "./nouvelle.log",
-  bootstrap_marker_global = "BOOTSTRAP_LOADED",
+  bootstrap_marker_global = "__MARKER__BOOTSTRAP__LOADED__",
   requireable = true,
 } ---@type Bootstrap
 
@@ -30,20 +30,15 @@ local function already_loaded()
   print("Bootstrap already loaded")
 end
 
+--Check if bootstrap is already loded
 if Bootstrap.bootstrap_marker_global then
-  --Check if bootstrap is already loded
   if rawget(_G, Bootstrap.bootstrap_marker_global) then
     return already_loaded()
   end
-  --Set global variable
-  rawset(_G, Bootstrap.bootstrap_marker_global, true)
 elseif Bootstrap.bootstrap_global then
-  --Check if bootstrap is already loded
   if rawget(_G, Bootstrap.bootstrap_global) then
     return already_loaded()
   end
-  --Set global variable
-  rawset(_G, Bootstrap.bootstrap_global, Bootstrap)
 elseif Bootstrap.requireable then
   --If global variable is not used, check package cache instead!
   --This isn't as reliable but better then nothing
@@ -51,7 +46,15 @@ elseif Bootstrap.requireable then
     return already_loaded()
   end
 else
-  error("No expose standard found, enable bootstrap_global, bootstrap_marker_global or requireable")
+  error("No bootstrap standard found, enable bootstrap_global, bootstrap_marker_global or requireable")
+end
+
+--Set global variables
+if Bootstrap.bootstrap_marker_global then
+  rawset(_G, Bootstrap.bootstrap_marker_global, true)
+end
+if Bootstrap.bootstrap_global then
+  rawset(_G, Bootstrap.bootstrap_global, Bootstrap)
 end
 
 --Change path
