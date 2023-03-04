@@ -27,23 +27,23 @@ Bootstrap.keystore = {}
 assert(rawget(_G, "tpt"), "This is a The Powder Toy mod")
 
 local function already_loaded()
-  print("Bootstrap already loaded")
+  error("Bootstrap already loaded", 0)
 end
 
 --Check if bootstrap is already loded
 if Bootstrap.bootstrap_marker_global then
   if rawget(_G, Bootstrap.bootstrap_marker_global) then
-    return already_loaded()
+    already_loaded()
   end
 elseif Bootstrap.bootstrap_global then
   if rawget(_G, Bootstrap.bootstrap_global) then
-    return already_loaded()
+    already_loaded()
   end
 elseif Bootstrap.requireable then
   --If global variable is not used, check package cache instead!
   --This isn't as reliable but better then nothing
   if type(package.loaded[require_path]) == "table" then
-    return already_loaded()
+    already_loaded()
   end
 else
   error("No bootstrap standard found, enable bootstrap_global, bootstrap_marker_global or requireable")
