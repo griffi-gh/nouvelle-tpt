@@ -253,7 +253,9 @@ do
     error_header = "Load"
     local init = require(assert(Bootstrap.entry_point, "No entry_point provided"))
     error_header = "Init"
-    init()
+    if type(init) == "function" then
+      init()
+    end
     error_header = "Runtime"
   end, use_xpcall and debug.traceback)
   if not ok then
