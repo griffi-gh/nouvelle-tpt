@@ -14,14 +14,18 @@ local require_path = ...
 ---@class Bootstrap
 ---@field public friendly_name string Name of the software to load
 ---@field public entry_point string Entry point module to load
----@field public log_path string Path to store log files
+---@field public log_path string? Path to store log files
 ---@field public safe_mode_file string? Setting this to nil completely disables all safe mode functionality
 ---@field public bootstrap_global string? Expose Bootstrap table at this global (optional)
 ---@field public bootstrap_marker_global string? This global is used to check if bootstrap is already used
 ---@field public requireable (boolean | string)? Expose Bootstrap as require module (set to a string to override the name)
 ---@field private keystore table Key storage for arbitrary data 
+---@field private log_sinks function[]
+---@field private log_file file*?
+---@field private log_tab_amount integer
 local Bootstrap = BOOTSTRAP_PRODUCT
 Bootstrap.keystore = {}
+Bootstrap.log_sinks = {}
 
 --Check for tpt
 assert(rawget(_G, "tpt"), "This is a The Powder Toy mod")
@@ -81,12 +85,11 @@ do
 
   ---Get _G.key
   ---@param key any
-  ---@return any
+  ---@return unknown
   function Bootstrap:get_global(key)
     return rawget(_G, key)
   end
 end
-
 
 --Prevent global TPTMP from loading unsandboxed
 if tpt.version.jacob1s_mod then
@@ -95,33 +98,48 @@ end
 
 --Logging
 do
-  do 
-    --Empty the file
-    local log_file = assert(io.open(Bootstrap.log_path, "wb"))
-    log_file:write("")
-    log_file:close()
+  --Set up file log
+  if Bootstrap.log_path ~= nil then
+    do 
+      --Empty the file
+      local log_file = assert(io.open(Bootstrap.log_path, "wb"))
+      log_file:write("")
+      log_file:close()
+    end
+    Bootstrap.log_file = assert(io.open(Bootstrap.log_path, "a+b"))
+    Bootstrap.log_sinks[#Bootstrap.log_sinks+1] = function(self, message)
+      self.log_file:write(message.."\n")
+    end
+    event.register(event.close, function()
+      Bootstrap.log_file:close()
+    end)
   end
-  Bootstrap.log_file = assert(io.open(Bootstrap.log_path, "a+b"))
 
-  local tab = 0
-  ---@param t number?
-  function Bootstrap:log_tab(t)
-    tab = tab + (math.floor(t or 1))
-  end
+  Bootstrap.log_tab_amount = 0
+
   ---@param ... any
   function Bootstrap:log(...)
-    local message = (" "):rep(tab * 2)..table.concat({...}, " ")
-    self.log_file:write(message.."\n")
+    local message = (" "):rep(self.log_tab_amount * 2)..table.concat({...}, " ")
+    for _, sink in ipairs(self.log_sinks) do
+      sink(self, message)
+    end
   end
+
   ---@param fmt string
   ---@param ... any?
   function Bootstrap:log_fmt(fmt, ...)
     self:log(string.format(fmt, ...))
   end
-  event.register(event.close, function()
-    Bootstrap.log_file:close()
-  end)
-  Bootstrap:log("BOOTSTRAP LOGGER: "..Bootstrap.friendly_name)
+
+  ---@param t number?
+  function Bootstrap:log_tab(t)
+    self.log_tab_amount = self.log_tab_amount + (math.floor(t or 1))
+  end
+
+  ---@param fn function
+  function Bootstrap:add_log_sink(fn)
+    self.log_sinks[#self.log_sinks+1] = fn
+  end
 end
 
 --Keystore
@@ -135,7 +153,7 @@ do
 
   ---Get keystore[key]
   ---@param key any
-  ---@return any?
+  ---@return unknown?
   function Bootstrap:get_keystore(key)
     return self.keystore[key]
   end
@@ -147,21 +165,16 @@ do
   end
 end
 
-
-
 ---Require relative to bootstrapped module
 ---@param path string
+---@return any
 function Bootstrap:require(path)
   require(self.entry_point..'.'..path)
 end
 
 --Make sure that JIT is not disabled
-if Bootstrap:get_global("jit") then 
-  if pcall(jit.on) then
-    Bootstrap:log("JIT: on")
-  else
-    Bootstrap:log("JIT: off")
-  end
+if Bootstrap:get_global("jit") then
+  pcall(jit.on)
 end
 
 --Handle safe mode

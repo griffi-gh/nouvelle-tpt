@@ -10,15 +10,34 @@ local nv_config = { ---@class NvConfig
 }
 
 ---@class Nouvelle
----@field public runtime_manager RuntimeManager
+---@field runtime_manager RuntimeManager
+---@field log LogEntry[]
 local Nouvelle = {}
 Nouvelle.__index = Nouvelle
 
-function Nouvelle:new() ---@return Nouvelle
+---@class LogEntry
+---@field public message string
+---@field public time number
+
+---@return Nouvelle
+function Nouvelle:new() 
   local nouvelle = { ---@type Nouvelle
     runtime_manager = RuntimeManager:new(),
+    log = {},
   }
   return setmetatable(nouvelle, self)
+end
+
+---@return Nouvelle
+function Nouvelle:setup_log_sink()
+  Bootstrap:add_log_sink(function (_, message)
+    ---@type LogEntry
+    self.log[#self.log+1] = {
+      message = message,
+      time = os.time()
+    }
+  end)
+  return self
 end
 
 function Nouvelle:init() ---@return Nouvelle
@@ -30,10 +49,12 @@ function Nouvelle:init() ---@return Nouvelle
 end
 
 return function()
+  local nouvelle = Nouvelle:new()
+  nouvelle:setup_log_sink()
   Bootstrap:log("[*] Init process started")
   Bootstrap:log_tab()
   local time = os.clock()
-  local nouvelle = Nouvelle:new():init()
+  nouvelle:init()
   time = os.clock() - time
   Bootstrap:log_tab(-1)
   Bootstrap:log_fmt("[*] Done in %.2f s", time)

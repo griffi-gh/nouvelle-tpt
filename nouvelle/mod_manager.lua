@@ -1,7 +1,15 @@
+local Bootstrap = require('bootstrap')
 local Mod = require(.....'.mod') ---@type Mod
+local TOML = Bootstrap:require('lib.toml') ---@type TOML
+
+local manifest_file = "Mod.toml"
+
+---@class ModError
+---@field public error string
 
 ---@class ModManager
----@field mods table<string | number, Mod>
+---@field public mods Mod[]
+---@field public errors ModError[]
 local ModManager = {} 
 ModManager.__index = ModManager
 
@@ -9,7 +17,8 @@ ModManager.__index = ModManager
 function ModManager:new() 
   ---@type ModManager
   local mod_manager = { 
-    mods = {}
+    mods = {},
+    errors = {}
   }
   return setmetatable(mod_manager, self)
 end
@@ -18,7 +27,11 @@ end
 ---@param mods table<string | number, Mod>
 ---@param path string
 local function load_mod(mods, path)
-
+  local manfiest_file = assert(io.open(path..'/'..manifest_file, "rb"))
+  local manifest_data = manfiest_file:read("*a")
+  manfiest_file:close()
+  local manifest = TOML.parse(manifest_data)
+  return Mod:from_path_and_manifest(path, manifest)
 end
 
 ---Recursively load mods from directory
@@ -28,7 +41,10 @@ local function recursive_search(mods, path)
   do
     local manifest_path = path.."/Mod.toml"
     if fs.exists(manifest_path) and fs.isFile(manifest_path) then
-      load_mod(mods, path)
+      local ok, err = pcall(load_mod, mods, path)
+      if not ok then
+        
+      end
       return
     end
   end
