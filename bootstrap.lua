@@ -167,9 +167,9 @@ end
 
 ---Require relative to bootstrapped module
 ---@param path string
----@return any
+---@return unknown
 function Bootstrap:require(path)
-  require(self.entry_point..'.'..path)
+  return require(self.entry_point..'.'..path)
 end
 
 --Make sure that JIT is not disabled

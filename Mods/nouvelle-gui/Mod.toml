@@ -1,6 +1,7 @@
 [metadata]
 id = "nouvelle-gui"
 name = "Nouvelle GUI"
+author = "Nouvelle"
 description = "Graphical interface for the Nouvelle mod manager"
 update = false
 

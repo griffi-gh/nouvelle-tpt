@@ -4,11 +4,25 @@ local TOML = Bootstrap:require('lib.toml') ---@type TOML
 
 local manifest_file = "Mod.toml"
 
+---@class ModExt: Mod
+---@field public nid number Contains numeric id of the mod
+local ModExt = setmetatable({}, {
+  __index = Mod
+})
+ModExt.__index = ModExt
+
+---@param mod Mod
+---@return ModExt
+function ModExt:cast(mod)
+  local mod = mod ---@type table
+  return setmetatable(mod, ModExt)
+end
+
 ---@class ModError
 ---@field public error string
 
 ---@class ModManager
----@field public mods Mod[]
+---@field public mods table<string | integer, ModExt>
 ---@field public errors ModError[]
 local ModManager = {} 
 ModManager.__index = ModManager
@@ -24,46 +38,86 @@ function ModManager:new()
 end
 
 ---Load single mod from directory
----@param mods table<string | number, Mod>
+---@param mods table<string | number, ModExt>
 ---@param path string
 local function load_mod(mods, path)
   local manfiest_file = assert(io.open(path..'/'..manifest_file, "rb"))
   local manifest_data = manfiest_file:read("*a")
   manfiest_file:close()
   local manifest = TOML.parse(manifest_data)
-  return Mod:from_path_and_manifest(path, manifest)
+  ---@type ModExt
+  local mod = ModExt:cast(Mod:from_path_and_manifest(path, manifest))
+  mod.nid = #mods + 1
+
+  mods[mod.nid] = mod
+  mods[mod.id] = mod
+  
+  Bootstrap:log_fmt(
+    "Loaded mod: \"%s\"%s (id: %s, nid: %s)", 
+    mod:get_name(), 
+    mod.author and (" by %s"):format(mod.author) or "",
+    mod.id, 
+    mod.nid
+  )
 end
 
 ---Recursively load mods from directory
----@param mods table<string | number, Mod>
+---@param mods table<string | number, ModExt>
 ---@param path string
+---@return ModError[]
 local function recursive_search(mods, path)
   do
     local manifest_path = path.."/Mod.toml"
     if fs.exists(manifest_path) and fs.isFile(manifest_path) then
       local ok, err = pcall(load_mod, mods, path)
       if not ok then
-        
+        return {{error = err}}
+      else
+        return {}
       end
-      return
     end
   end
-  for _, name in fs.list(path) do
-    local item_path = path.."/"..name
+  
+  local errors = {}
+
+  ---@param _ integer
+  ---@param file_name string
+  for _, file_name in ipairs(fs.list(path)) do
+    local item_path = path.."/"..file_name
     if fs.isDirectory(item_path) then
       local manifest_path = item_path.."/Mod.toml"
       if fs.exists(manifest_path) and fs.isFile(manifest_path) then
-        load_mod(mods, item_path)
+        local ok, err = pcall(load_mod, mods, item_path)
+        if not ok then
+          errors[#errors+1] = {
+            error = err
+          }
+        end
       else
         recursive_search(mods, item_path)
       end
     end
   end
+
+  return errors
 end
 
 ---@param path string
 function ModManager:load_mods_from_path(path)
-  recursive_search(self.mods, path)
+  Bootstrap:log("Loading mods...")
+  Bootstrap:log_tab()
+  local errs = #self.errors
+  for i, error in ipairs(recursive_search(self.mods, path)) do
+    Bootstrap:log_fmt("Mod load error: %s", error.error)
+    self.errors[errs+i] = error
+  end
+  Bootstrap:log_tab(-1)
+end
+
+function ModManager:run_mods()
+  for _, mod in ipairs(self.mods) do
+    
+  end
 end
 
 return ModManager
