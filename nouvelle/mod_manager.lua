@@ -45,20 +45,22 @@ local function load_mod(mods, path)
   local manifest_data = manfiest_file:read("*a")
   manfiest_file:close()
   local manifest = TOML.parse(manifest_data)
-  ---@type ModExt
-  local mod = ModExt:cast(Mod:from_path_and_manifest(path, manifest))
-  mod.nid = #mods + 1
-
-  mods[mod.nid] = mod
-  mods[mod.id] = mod
-  
-  Bootstrap:log_fmt(
-    "Loaded mod: \"%s\"%s (id: %s, nid: %s)", 
+  local mod = Mod:from_path_and_manifest(path, manifest)
+  local log_message = string.format(
+    "\"%s\"%s (id: %s)", 
     mod:get_name(), 
     mod.author and (" by %s"):format(mod.author) or "",
-    mod.id, 
-    mod.nid
+    mod.id
   )
+  if mods[mod.id] == nil then
+    local mod = ModExt:cast(mod)
+    mod.nid = #mods + 1
+    mods[mod.nid] = mod
+    mods[mod.id] = mod
+    Bootstrap:log_fmt("New mod discovered: %s with nid %d", log_message, mod.nid)
+  else
+    Bootstrap:log("Already loaded:", log_message)
+  end
 end
 
 ---Recursively load mods from directory
